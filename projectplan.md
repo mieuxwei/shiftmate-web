@@ -774,7 +774,7 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M3 | Schedule domain and Dashboard | M2 | COMPLETE |
 | M4 | Gemini schedule import ETL | M3 | COMPLETE |
 | M5 | LangChain RAG and citations | M2 | COMPLETE |
-| M6 | LangGraph hybrid assistant | M3, M5 | NOT_STARTED |
+| M6 | LangGraph hybrid assistant | M3, M5 | COMPLETE |
 | M7 | Google Calendar and ICS | M3 | NOT_STARTED |
 | M8 | MCP Server | M3, M5, M6 | NOT_STARTED |
 | M9 | Security, scheduling and cost controls | M4, M5, M7, M8 | NOT_STARTED |

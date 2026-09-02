@@ -46,6 +46,12 @@ class PolicyUploadInfo:
     page_count: int
 
 
+@dataclass(frozen=True, slots=True)
+class PolicyEvidence:
+    text: str
+    citation: PolicyCitation
+
+
 class PolicyService:
     def __init__(self, repository: PolicyRepository) -> None:
         self.repository = repository
@@ -127,14 +133,10 @@ class PolicyService:
         top_k: int,
         score_threshold: float,
     ) -> PolicyAnswerResponse:
-        retriever = OwnerScopedPolicyRetriever(
-            connection=connection,
-            embeddings=embeddings,
-            top_k=top_k,
-            score_threshold=score_threshold,
+        evidence_items = self.retrieve_evidence(
+            connection, question, embeddings, top_k, score_threshold
         )
-        documents = retriever.retrieve_without_external_tracing(question.strip())
-        if not documents:
+        if not evidence_items:
             return PolicyAnswerResponse(
                 answer="上傳的規章中沒有足夠資料可以回答這個問題。",
                 refused=True,
@@ -143,16 +145,42 @@ class PolicyService:
                 model_name=None,
             )
         evidence = [
-            _evidence(index, document) for index, document in enumerate(documents)
+            {
+                "label": f"source_{index + 1}",
+                "title": item.citation.title,
+                "page_number": item.citation.page_number,
+                "text": item.text,
+            }
+            for index, item in enumerate(evidence_items)
         ]
         answer = answerer.answer(question.strip(), evidence)
         return PolicyAnswerResponse(
             answer=answer,
             refused=False,
-            citations=[_citation(document) for document in documents],
+            citations=[item.citation for item in evidence_items],
             prompt_version=answerer.prompt_version,
             model_name=answerer.model_name,
         )
+
+    def retrieve_evidence(
+        self,
+        connection: Connection,
+        question: str,
+        embeddings: Embeddings,
+        top_k: int,
+        score_threshold: float,
+    ) -> list[PolicyEvidence]:
+        retriever = OwnerScopedPolicyRetriever(
+            connection=connection,
+            embeddings=embeddings,
+            top_k=top_k,
+            score_threshold=score_threshold,
+        )
+        documents = retriever.retrieve_without_external_tracing(question.strip())
+        return [
+            PolicyEvidence(text=document.page_content, citation=_citation(document))
+            for document in documents
+        ]
 
 
 def _evidence(index: int, document: Document) -> dict[str, object]:

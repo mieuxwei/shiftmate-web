@@ -4,8 +4,8 @@ Last updated: 2026-09-02
 
 ## Current position
 
-- Last completed milestone: **M5 — LangChain RAG and citations**
-- Active milestone: **None; M6 not started**
+- Last completed milestone: **M6 — LangGraph hybrid assistant**
+- Active milestone: **None; M7 not started**
 - Blockers: none
 
 ## Completed
@@ -29,6 +29,22 @@ Last updated: 2026-09-02
 
 ## Latest milestone
 
+- M6 is complete: a typed, stateless LangGraph normalizes each request, routes
+  deterministic-first across schedule, policy, hybrid, and unsupported nodes,
+  validates evidence, and composes bounded responses without a checkpointer or
+  process-local conversational memory.
+- Schedule facts, hours, consecutive days, and estimated pay come only from the
+  owner-scoped deterministic analytics service. Policy citations come only from
+  owner-scoped pgvector retrieval. The LLM never receives raw SQL or authority
+  to calculate or write confirmed data.
+- Hybrid consecutive-day analysis requires schedule rows, retrieved citations,
+  and one unambiguous parseable rule threshold. Missing shifts, missing policy,
+  unsupported rules, or conflicting thresholds produce an explicit refusal
+  instead of a compliance conclusion.
+- The responsive assistant UI shows route, tool status, deterministic facts,
+  citations, refusal state, and a legal/HR/payroll disclaimer. A ten-case
+  synthetic offline routing fixture covers all four routes, English/Traditional
+  Chinese, writes, raw SQL, and prompt-injection-like input.
 - M4 is complete: authenticated users can upload a JPG, PNG, or PDF into an
   owner-isolated import draft, review the structured candidates beside a local
   source preview, edit and explicitly confirm individual rows, then commit only
@@ -58,10 +74,10 @@ Last updated: 2026-09-02
 
 ## Next task packet
 
-Begin M6 with deterministic intent normalization/routing for schedule, policy,
-hybrid, and unsupported questions, then continue through the LangGraph workflow,
-evidence validation, bounded answers, UI integration, routing fixtures, and the
-complete M6 gate. Do not let the LLM execute SQL or calculate payroll.
+Begin M7 with the Calendar OAuth/token boundary and zero-authorization ICS
+fallback contract, then continue through safe create/update/delete sync,
+idempotency and revoked-token handling, UI integration, and the complete M7
+gate. Stop before any paid resource or live credential-dependent action.
 
 ## Known risks
 

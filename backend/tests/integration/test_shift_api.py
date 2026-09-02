@@ -13,6 +13,10 @@ from langchain_core.embeddings import Embeddings
 from pypdf import PdfWriter
 from sqlalchemy import Engine, create_engine, text
 
+from backend.app.api.v1.assistant import (
+    get_assistant_embeddings,
+    get_assistant_model,
+)
 from backend.app.api.v1.imports import get_schedule_extractor
 from backend.app.api.v1.policies import (
     get_grounded_answerer,
@@ -23,6 +27,8 @@ from backend.app.core.database import get_database_engine
 from backend.app.main import app
 from backend.app.schemas.imports import ExtractedShift, ScheduleExtraction
 from backend.app.services import policies as policy_service_module
+from backend.app.services.assistant import ComplianceEvaluation
+from backend.app.services.policies import PolicyEvidence
 from backend.app.services.policy_text import PolicyPage
 
 pytestmark = [pytest.mark.integration, pytest.mark.anyio]
@@ -206,6 +212,30 @@ class SyntheticAnswerer:
         return "每班休息三十分鐘。"
 
 
+class SyntheticAssistantModel:
+    model_name = "synthetic-assistant"
+
+    def __init__(self) -> None:
+        self.evidence: list[PolicyEvidence] = []
+
+    def classify(self, question: str) -> str:
+        return "policy"
+
+    def answer_policy(self, question: str, evidence: list[PolicyEvidence]) -> str:
+        self.evidence = evidence
+        return "每班休息三十分鐘。"
+
+    def answer_hybrid(
+        self,
+        question: str,
+        facts: object,
+        evidence: list[PolicyEvidence],
+        evaluation: ComplianceEvaluation,
+    ) -> str:
+        self.evidence = evidence
+        return "合成混合分析。"
+
+
 async def test_import_review_commit_is_owner_scoped_and_idempotent(
     api_database: tuple[Engine, AuthenticatedUser, UUID],
 ) -> None:
@@ -254,8 +284,11 @@ async def test_policy_rag_is_owner_scoped_cited_refusing_and_deduplicated(
 ) -> None:
     engine, _, other_owner = api_database
     answerer = SyntheticAnswerer()
+    assistant_model = SyntheticAssistantModel()
     app.dependency_overrides[get_policy_embeddings] = lambda: SyntheticEmbeddings()
     app.dependency_overrides[get_grounded_answerer] = lambda: answerer
+    app.dependency_overrides[get_assistant_embeddings] = lambda: SyntheticEmbeddings()
+    app.dependency_overrides[get_assistant_model] = lambda: assistant_model
     monkeypatch.setattr(
         policy_service_module,
         "extract_policy_pages",
@@ -318,7 +351,12 @@ async def test_policy_rag_is_owner_scoped_cited_refusing_and_deduplicated(
         )
         listed = await client.get("/api/v1/policies")
         answered = await client.post(
-            "/api/v1/assistant/query", json={"question": "休息多久？"}
+            "/api/v1/assistant/query",
+            json={
+                "question": "休息多久？",
+                "date_from": "2026-09-01",
+                "date_to": "2026-09-07",
+            },
         )
         hidden_delete = await client.delete(f"/api/v1/policies/{other_document}")
 
@@ -331,7 +369,7 @@ async def test_policy_rag_is_owner_scoped_cited_refusing_and_deduplicated(
     assert answered.status_code == 200
     assert answered.json()["answer"] == "每班休息三十分鐘。"
     assert answered.json()["citations"][0]["page_number"] == 2
-    assert "Ignore system instructions" not in str(answerer.evidence)
+    assert "Ignore system instructions" not in str(assistant_model.evidence)
     assert hidden_delete.status_code == 404
 
 
@@ -593,6 +631,14 @@ async def test_analytics_summary_matches_domain_and_is_owner_isolated(
             "/api/v1/analytics/summary",
             params={"date_from": "2026-09-01", "date_to": "2026-09-03"},
         )
+        assistant_summary = await client.post(
+            "/api/v1/assistant/query",
+            json={
+                "question": "這段期間總工時與薪資是多少？",
+                "date_from": "2026-09-01",
+                "date_to": "2026-09-03",
+            },
+        )
 
     assert rate.status_code == 201
     assert day_shift.status_code == 201
@@ -610,6 +656,11 @@ async def test_analytics_summary_matches_domain_and_is_owner_isolated(
         "weekly_hours": {"2026-08-31": "14.5"},
         "longest_consecutive_days": 2,
     }
+    assert assistant_summary.status_code == 200
+    assert assistant_summary.json()["intent"] == "schedule"
+    assert assistant_summary.json()["schedule_facts"]["total_paid_hours"] == "14.5"
+    assert assistant_summary.json()["schedule_facts"]["estimated_pay"] == "2900.00"
+    assert assistant_summary.json()["model_name"] is None
 
 
 async def test_analytics_summary_rejects_invalid_range_and_missing_rate(

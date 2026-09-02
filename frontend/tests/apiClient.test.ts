@@ -61,6 +61,41 @@ describe('ApiClient', () => {
     )
   })
 
+  it('sends a stateless assistant request with an explicit date range', async () => {
+    const response = {
+      answer: '目前只能回答班表與規章問題。',
+      intent: 'unsupported',
+      refused: true,
+      citations: [],
+      schedule_facts: null,
+      tools: [],
+      prompt_version: null,
+      model_name: null,
+    }
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify(response), { status: 200 }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const client = new ApiClient(() => 'synthetic-token')
+
+    await client.queryAssistant('今天天氣如何？', {
+      dateFrom: '2026-09-01',
+      dateTo: '2026-09-07',
+    })
+
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(path).toBe('/api/v1/assistant/query')
+    expect(typeof init.body).toBe('string')
+    const requestBody = typeof init.body === 'string' ? init.body : ''
+    expect(JSON.parse(requestBody)).toEqual({
+      question: '今天天氣如何？',
+      date_from: '2026-09-01',
+      date_to: '2026-09-07',
+    })
+  })
+
   it('does not call the API without an access token', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

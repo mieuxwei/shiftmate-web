@@ -1,9 +1,9 @@
 import type {
   AnalyticsSummary,
+  AssistantAnswer,
   DateRange,
   ImportCommit,
   ImportItemUpdate,
-  PolicyAnswer,
   PolicyDocument,
   PolicyUpload,
   PayRate,
@@ -152,10 +152,14 @@ export class ApiClient {
     })
   }
 
-  queryPolicy(question: string): Promise<PolicyAnswer> {
+  queryAssistant(question: string, range: DateRange): Promise<AssistantAnswer> {
     return this.request(
       '/api/v1/assistant/query',
-      this.jsonRequest('POST', { question }),
+      this.jsonRequest('POST', {
+        question,
+        date_from: range.dateFrom,
+        date_to: range.dateTo,
+      }),
     )
   }
 

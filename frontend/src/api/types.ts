@@ -139,3 +139,32 @@ export type PolicyAnswer = {
   prompt_version: string
   model_name: string | null
 }
+
+export type AssistantIntent = 'schedule' | 'policy' | 'hybrid' | 'unsupported'
+
+export type AssistantScheduleFacts = {
+  date_from: string
+  date_to: string
+  timezone: string
+  currency: string
+  shift_count: number
+  total_paid_hours: string
+  estimated_pay: string
+  longest_consecutive_days: number
+}
+
+export type AssistantToolTrace = {
+  name: 'schedule_summary' | 'policy_retrieval' | 'rule_evaluator'
+  status: 'used' | 'insufficient'
+}
+
+export type AssistantAnswer = {
+  answer: string
+  intent: AssistantIntent
+  refused: boolean
+  citations: PolicyCitation[]
+  schedule_facts: AssistantScheduleFacts | null
+  tools: AssistantToolTrace[]
+  prompt_version: string | null
+  model_name: string | null
+}

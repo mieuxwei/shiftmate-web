@@ -1,15 +1,11 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 
 import type { ApiClient } from '../../api/client'
-import type {
-  PolicyAnswer,
-  PolicyDocument,
-  PolicyStatus,
-} from '../../api/types'
+import type { PolicyDocument, PolicyStatus } from '../../api/types'
 
 export type PolicyClient = Pick<
   ApiClient,
-  'listPolicies' | 'createPolicy' | 'deletePolicy' | 'queryPolicy'
+  'listPolicies' | 'createPolicy' | 'deletePolicy'
 >
 
 const statusLabels: Record<PolicyStatus, string> = {
@@ -24,8 +20,6 @@ export function PolicyManager({ client }: { client: PolicyClient }) {
   const [title, setTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [confirmedSafeData, setConfirmedSafeData] = useState(false)
-  const [question, setQuestion] = useState('')
-  const [answer, setAnswer] = useState<PolicyAnswer | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -85,23 +79,8 @@ export function PolicyManager({ client }: { client: PolicyClient }) {
       setDocuments((current) =>
         (current ?? []).filter((document) => document.id !== documentId),
       )
-      setAnswer(null)
     } catch {
       setMessage('無法刪除這份規章。')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function askPolicy(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setBusy(true)
-    setMessage(null)
-    setAnswer(null)
-    try {
-      setAnswer(await client.queryPolicy(question.trim()))
-    } catch {
-      setMessage('目前無法查詢規章，既有班表功能仍可使用。')
     } finally {
       setBusy(false)
     }
@@ -185,55 +164,10 @@ export function PolicyManager({ client }: { client: PolicyClient }) {
         ))}
       </div>
 
-      <form
-        className="policy-question"
-        onSubmit={(event) => {
-          void askPolicy(event)
-        }}
-      >
-        <label>
-          根據已上傳規章提問
-          <textarea
-            maxLength={1000}
-            minLength={2}
-            onChange={(event) => setQuestion(event.target.value)}
-            placeholder="例如：每班休息時間如何規定？"
-            required
-            value={question}
-          />
-        </label>
-        <button
-          className="primary-action"
-          disabled={busy || readyCount === 0}
-          type="submit"
-        >
-          查詢規章
-        </button>
-      </form>
-
       {message && (
         <p className="policy-message" role="status">
           {message}
         </p>
-      )}
-
-      {answer && (
-        <article className="policy-answer" aria-live="polite">
-          <h3>{answer.refused ? '資料不足' : '依規章回答'}</h3>
-          <p>{answer.answer}</p>
-          {answer.citations.length > 0 && (
-            <ol aria-label="引用來源">
-              {answer.citations.map((citation) => (
-                <li key={citation.chunk_id}>
-                  <strong>
-                    {citation.title}，第 {citation.page_number} 頁
-                  </strong>
-                  <blockquote>{citation.excerpt}</blockquote>
-                </li>
-              ))}
-            </ol>
-          )}
-        </article>
       )}
     </section>
   )

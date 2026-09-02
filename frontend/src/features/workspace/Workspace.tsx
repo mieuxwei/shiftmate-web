@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { ApiClient } from '../../api/client'
 import type { AnalyticsSummary, DateRange, Shift } from '../../api/types'
+import {
+  AssistantPanel,
+  type AssistantClient,
+} from '../assistant/AssistantPanel'
 import { Dashboard } from '../dashboard/Dashboard'
 import { ImportManager, type ImportClient } from '../imports/ImportManager'
 import { PayRateManager } from '../payRates/PayRateManager'
@@ -38,7 +42,7 @@ export type WorkspaceClient = Pick<
       | 'listPolicies'
       | 'createPolicy'
       | 'deletePolicy'
-      | 'queryPolicy'
+      | 'queryAssistant'
     >
   >
 
@@ -172,6 +176,9 @@ function RangeData({
       {!readOnly && hasPolicyClient(client) && (
         <PolicyManager client={client} />
       )}
+      {!readOnly && hasAssistantClient(client) && (
+        <AssistantPanel client={client} range={range} />
+      )}
       <ScheduleView
         mode={mode}
         range={range}
@@ -195,11 +202,14 @@ function hasPolicyClient(
   client: WorkspaceClient,
 ): client is WorkspaceClient & PolicyClient {
   return Boolean(
-    client.listPolicies &&
-    client.createPolicy &&
-    client.deletePolicy &&
-    client.queryPolicy,
+    client.listPolicies && client.createPolicy && client.deletePolicy,
   )
+}
+
+function hasAssistantClient(
+  client: WorkspaceClient,
+): client is WorkspaceClient & AssistantClient {
+  return Boolean(client.queryAssistant)
 }
 
 function hasImportClient(

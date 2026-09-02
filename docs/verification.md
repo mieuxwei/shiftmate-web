@@ -3,6 +3,46 @@
 Record commands and observable results here at milestone gates. Do not record
 secrets, tokens, private source data, or full model payloads.
 
+## 2026-09-02 — M6 LangGraph hybrid assistant milestone gate
+
+- Added the real typed LangGraph workflow specified in the plan: normalize,
+  deterministic-first route, schedule/policy/hybrid/unsupported nodes, evidence
+  validation, answer composition, and END. The compiled graph has no
+  checkpointer and tests prove one request cannot leak facts or citations into
+  the next.
+- Schedule facts and payroll estimates come from the existing owner-scoped
+  deterministic analytics service. Policy evidence uses the existing
+  LangChain/pgvector RLS retriever. Raw SQL and write requests are rejected
+  before model routing; schedule-only requests still work with Gemini
+  unconfigured.
+- Hybrid consecutive-day evaluation refuses when shifts, citations, a supported
+  rule threshold, or a single unambiguous threshold is missing. Supported
+  results preserve deterministic facts and database-derived page citations for
+  the bounded Gemini response prompt.
+- Added the authenticated assistant API plus responsive conversation UI with
+  route, tool status, schedule facts, citations, refusal state, and the explicit
+  legal/HR/payroll portfolio disclaimer.
+- `ruff format --check .`, `ruff check .`, and strict `mypy` passed. The full
+  Python gate passed all 80 tests against disposable PostgreSQL 17 + pgvector,
+  including all 15 integration tests, with 93% `backend.app` coverage.
+- Frontend Prettier, ESLint, strict typecheck, and production build passed from
+  an identical temporary copy; all 34 tests passed. The bundle contains 75
+  modules, 441.70 kB JavaScript (125.14 kB gzip), and 13.64 kB CSS (3.26 kB
+  gzip).
+- The ten-case offline route report produced 1.0 accuracy, 1.0 deterministic
+  coverage, zero fallbacks, and correct results for schedule (3), policy (2),
+  hybrid (2), and unsupported (3) cases.
+- `docker build --target runtime -t shiftmate-web:m6 .` passed from the
+  identical temporary copy. The non-root `app` runtime served the production
+  SPA, production health response, and typed `/api/v1/assistant/query` OpenAPI
+  contract.
+- No live Gemini request, private data, credential, paid service, or cloud
+  resource was used. Docker and frontend temporary-copy verification was needed
+  because of the already-recorded macOS file-provider/sandbox behavior.
+
+M6 passed its complete acceptance gate and is `COMPLETE`. Commit and push remain
+pending explicit user approval.
+
 ## 2026-09-02 — M5 LangChain RAG and citations
 
 - Added migration `20260902_0004`: policy embeddings are `vector(768)`, cosine

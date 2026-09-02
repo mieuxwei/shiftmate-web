@@ -33,9 +33,7 @@ from backend.app.repositories.policies import (
     PostgresPolicyRepository,
 )
 from backend.app.schemas.policies import (
-    PolicyAnswerResponse,
     PolicyDocumentResponse,
-    PolicyQueryRequest,
     PolicyUploadResponse,
 )
 from backend.app.services.policies import (
@@ -53,7 +51,6 @@ from backend.app.services.upload_validation import (
 )
 
 router = APIRouter(prefix="/policies", tags=["policies"])
-assistant_router = APIRouter(prefix="/assistant", tags=["assistant"])
 
 
 @lru_cache
@@ -185,25 +182,3 @@ def delete_policy(
     except PolicyNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@assistant_router.post("/query", response_model=PolicyAnswerResponse)
-def query_policy(
-    payload: PolicyQueryRequest,
-    connection: Annotated[Connection, Depends(user_connection)],
-    service: Annotated[PolicyService, Depends(get_policy_service)],
-    embeddings: Annotated[Embeddings, Depends(get_policy_embeddings)],
-    answerer: Annotated[GroundedAnswerer, Depends(get_grounded_answerer)],
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> PolicyAnswerResponse:
-    try:
-        return service.answer_question(
-            connection,
-            payload.question,
-            embeddings,
-            answerer,
-            settings.rag_top_k,
-            settings.rag_score_threshold,
-        )
-    except GeminiRagError as error:
-        raise HTTPException(status_code=503, detail=error.code) from error
