@@ -24,6 +24,13 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 coverage/
+.vite/
+.pnpm-store/
+
+# Build and packaging
+*.egg-info/
+build/
+dist/
 
 # Local tools and editors
 .DS_Store

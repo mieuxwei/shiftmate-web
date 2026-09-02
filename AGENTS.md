@@ -37,4 +37,18 @@ git ls-files
 git grep -nEi '(api[_-]?key|client[_-]?secret|access[_-]?token|refresh[_-]?token|password)[[:space:]]*[:=][[:space:]]*[^[:space:]$<{]+'
 ```
 
-Application commands will be added in M1 alongside the relevant toolchain.
+M1:
+
+```bash
+ruff format --check .
+ruff check .
+mypy
+pytest --cov=backend.app --cov-report=term-missing
+pnpm --dir frontend format
+pnpm --dir frontend lint
+pnpm --dir frontend typecheck
+pnpm --dir frontend test
+pnpm --dir frontend build
+docker build -t shiftmate-web:m1 .
+docker run --rm -p 8080:8080 shiftmate-web:m1
+```

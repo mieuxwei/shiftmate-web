@@ -767,7 +767,7 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | ID | Milestone | Depends on | Status |
 |---|---|---|---|
 | M0 | Repository boundary and Codex context | — | COMPLETE |
-| M1 | Full-stack and Docker foundation | M0 | NOT_STARTED |
+| M1 | Full-stack and Docker foundation | M0 | COMPLETE |
 | M2 | PostgreSQL, Auth and RLS | M1 | NOT_STARTED |
 | M3 | Schedule domain and Dashboard | M2 | NOT_STARTED |
 | M4 | Gemini schedule import ETL | M3 | NOT_STARTED |
