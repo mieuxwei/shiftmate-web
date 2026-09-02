@@ -113,6 +113,10 @@ async def test_structured_http_log_omits_headers_query_and_body(
         )
 
     assert response.status_code in {401, 404, 503}
-    log = caplog.records[-1].message
+    messages = [
+        record.message for record in caplog.records if record.name == "shiftmate.http"
+    ]
+    assert messages, "Expected a structured shiftmate.http request log"
+    log = messages[-1]
     assert secret not in log
     assert json.loads(log)["path"] == "/api/v1/policies/{id}"

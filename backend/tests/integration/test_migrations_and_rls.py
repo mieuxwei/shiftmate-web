@@ -1,3 +1,4 @@
+import logging
 import os
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -77,8 +78,17 @@ def request_connection(
 
 
 def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
+    application_loggers = (
+        logging.getLogger("shiftmate.http"),
+        logging.getLogger("shiftmate.mcp.audit"),
+    )
+    for logger in application_loggers:
+        logger.disabled = False
+
     downgrade("base")
     migrate("head")
+
+    assert all(not logger.disabled for logger in application_loggers)
 
     with psycopg.connect(psycopg_url(database_url)) as connection:
         tables = {

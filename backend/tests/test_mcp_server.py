@@ -205,7 +205,13 @@ async def test_tool_call_returns_structured_result_and_audits_hashed_owner(
     assert result.structured_content is not None
     assert result.structured_content["total_paid_hours"] == "14.5"
     assert operations.calls == [("calculate_work_hours", USER.id)]
-    audit = caplog.records[-1].message
+    messages = [
+        record.message
+        for record in caplog.records
+        if record.name == "shiftmate.mcp.audit"
+    ]
+    assert messages, "Expected a structured shiftmate.mcp.audit log"
+    audit = messages[-1]
     assert '"outcome": "success"' in audit
     assert str(USER.id) not in audit
     assert "synthetic-user-token" not in audit

@@ -5,7 +5,7 @@ Last updated: 2026-09-03
 ## Current position
 
 - Last completed milestone: **M10 — AI evaluation and reliability**
-- Active milestone: **None; M10 complete, awaiting commit/push approval**
+- Active milestone: **None; M10 complete and pushed; CI repair verified locally**
 - Blockers: none
 
 ## Completed
@@ -42,6 +42,12 @@ Last updated: 2026-09-03
 - The complete backend, PostgreSQL integration, frontend, report-freshness,
   Docker build, production health, and SPA smoke gates passed without private
   data, a live model, a paid platform, or a cloud resource.
+- The first M10 push exposed an order-dependent CI failure: Alembic logging
+  configuration disabled the HTTP and MCP audit loggers after integration
+  migrations. The repair preserves existing application loggers, adds a
+  regression assertion, and passes all 108 tests in one PostgreSQL-backed
+  process. The repair passes the local CI-equivalent gate; GitHub Actions will
+  confirm it after push.
 
 - M9 is complete: the API has bounded process-local rate limiting for the
   max-one-instance deployment, durable per-owner upload quotas, and an
@@ -134,9 +140,10 @@ Last updated: 2026-09-03
 
 ## Next task packet
 
-After explicit M10 commit/push approval, begin M11 Cloud Run CI/CD deployment.
-M11 requires deployment choices, credentials, and checks that remain inside the
-NT$0 cost envelope; stop before any potentially paid resource or configuration.
+After the verified CI repair is approved, committed, pushed, and green on
+GitHub Actions, begin M11 Cloud Run CI/CD deployment. M11 requires deployment
+choices, credentials, and checks that remain inside the NT$0 cost envelope;
+stop before any potentially paid resource or configuration.
 
 ## Known risks
 

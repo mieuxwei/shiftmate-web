@@ -716,4 +716,26 @@ complete and was approved for commit/push.
 M10 acceptance passed: every report is rebuildable from versioned fixtures;
 metrics, sample counts, limitations, and failures are visible; baselines include
 representative misses; and evaluation remains offline and free. M10 is complete
-and awaits explicit commit/push approval.
+and was committed and pushed as `99ab6a7`.
+
+## 2026-09-03 — Post-M10 GitHub CI logging repair
+
+- GitHub Validate runs #9–#11 showed that integration migrations and later
+  logging tests failed only when executed in the same pytest process. Alembic's
+  `fileConfig` default disabled existing `shiftmate.http` and
+  `shiftmate.mcp.audit` loggers, leaving both `caplog` result lists empty.
+- Migration logging now sets `disable_existing_loggers=False`. The migration
+  round-trip integration test explicitly proves both application loggers remain
+  enabled, and the two logging tests select their named logger records and emit
+  clear assertions if a record is absent.
+- The exact failure order—migration round trip followed by HTTP and MCP logging
+  tests—passed 3/3 in one PostgreSQL-backed pytest process.
+- The complete GitHub backend-equivalent gate passed in one process against the
+  disposable PostgreSQL 17 + pgvector service: Ruff format and lint passed,
+  strict mypy passed for 69 source files, all four offline evaluation reports
+  were current, and all 108 tests passed with 88% `backend.app` coverage.
+- The disposable database container and network were removed. No external API,
+  live model, private data, paid platform, or cloud resource was used.
+
+The repair passes the local CI-equivalent gate. A new GitHub Validate run will
+confirm the remote gate after push.
