@@ -1,5 +1,6 @@
 import base64
 import json
+from collections.abc import Callable
 from pathlib import Path
 from typing import Protocol
 
@@ -29,10 +30,17 @@ class ScheduleExtractor(Protocol):
 class GeminiScheduleExtractor:
     prompt_version = PROMPT_VERSION
 
-    def __init__(self, api_key: str, model_name: str, timeout_seconds: float) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str,
+        timeout_seconds: float,
+        before_request: Callable[[], None] | None = None,
+    ) -> None:
         self.api_key = api_key
         self.model_name = model_name
         self.timeout_seconds = timeout_seconds
+        self.before_request = before_request
 
     def extract(self, path: Path, media_type: str, timezone: str) -> ScheduleExtraction:
         prompt = PROMPT_PATH.read_text(encoding="utf-8")
@@ -58,6 +66,8 @@ class GeminiScheduleExtractor:
             },
         }
         try:
+            if self.before_request is not None:
+                self.before_request()
             response = httpx.post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent",
                 headers={"x-goog-api-key": self.api_key},

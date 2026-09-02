@@ -1,5 +1,6 @@
 import json
 import math
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -25,11 +26,13 @@ class GeminiEmbeddings(Embeddings):
         model_name: str,
         timeout_seconds: float,
         dimensions: int = 768,
+        before_request: Callable[[], None] | None = None,
     ) -> None:
         self.api_key = api_key
         self.model_name = model_name
         self.timeout_seconds = timeout_seconds
         self.dimensions = dimensions
+        self.before_request = before_request
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         return [self._embed(text, "RETRIEVAL_DOCUMENT") for text in texts]
@@ -47,6 +50,8 @@ class GeminiEmbeddings(Embeddings):
                 "autoTruncate": False,
             },
         }
+        if self.before_request is not None:
+            self.before_request()
         body = _post_json(
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{self.model_name}:embedContent",
@@ -69,10 +74,17 @@ class GeminiEmbeddings(Embeddings):
 class GeminiGroundedAnswerer:
     prompt_version = RAG_PROMPT_VERSION
 
-    def __init__(self, api_key: str, model_name: str, timeout_seconds: float) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str,
+        timeout_seconds: float,
+        before_request: Callable[[], None] | None = None,
+    ) -> None:
         self.api_key = api_key
         self.model_name = model_name
         self.timeout_seconds = timeout_seconds
+        self.before_request = before_request
 
     def answer(self, question: str, evidence: list[dict[str, Any]]) -> str:
         prompt = RAG_PROMPT_PATH.read_text(encoding="utf-8")
@@ -96,6 +108,8 @@ class GeminiGroundedAnswerer:
             ],
             "generationConfig": {"temperature": 0, "maxOutputTokens": 700},
         }
+        if self.before_request is not None:
+            self.before_request()
         body = _post_json(
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{self.model_name}:generateContent",
@@ -116,7 +130,10 @@ class GeminiGroundedAnswerer:
 
 
 def _post_json(
-    url: str, api_key: str, payload: dict[str, object], timeout_seconds: float
+    url: str,
+    api_key: str,
+    payload: dict[str, object],
+    timeout_seconds: float,
 ) -> dict[str, Any]:
     try:
         response = httpx.post(

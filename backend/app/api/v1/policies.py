@@ -22,6 +22,12 @@ from backend.app.core.database import (
     get_database_engine,
     user_connection,
 )
+from backend.app.core.quotas import (
+    RequestQuotaGuard,
+    consume_upload_quota,
+    get_request_quota_guard,
+    quota_callback,
+)
 from backend.app.core.settings import Settings, get_settings
 from backend.app.integrations.gemini_rag import (
     GeminiEmbeddings,
@@ -66,6 +72,7 @@ def get_policy_service(
 
 def get_policy_embeddings(
     settings: Annotated[Settings, Depends(get_settings)],
+    quota_guard: Annotated[RequestQuotaGuard, Depends(get_request_quota_guard)],
 ) -> Embeddings:
     if not settings.gemini_api_key:
         raise HTTPException(status_code=503, detail="GEMINI_NOT_CONFIGURED")
@@ -74,11 +81,13 @@ def get_policy_embeddings(
         settings.gemini_embedding_model,
         settings.gemini_timeout_seconds,
         settings.gemini_embedding_dimensions,
+        quota_callback(quota_guard),
     )
 
 
 def get_grounded_answerer(
     settings: Annotated[Settings, Depends(get_settings)],
+    quota_guard: Annotated[RequestQuotaGuard, Depends(get_request_quota_guard)],
 ) -> GroundedAnswerer:
     if not settings.gemini_api_key:
         raise HTTPException(status_code=503, detail="GEMINI_NOT_CONFIGURED")
@@ -86,6 +95,7 @@ def get_grounded_answerer(
         settings.gemini_api_key,
         settings.gemini_model,
         settings.gemini_timeout_seconds,
+        quota_callback(quota_guard),
     )
 
 
@@ -102,6 +112,7 @@ async def create_policy(
     service: Annotated[PolicyService, Depends(get_policy_service)],
     embeddings: Annotated[Embeddings, Depends(get_policy_embeddings)],
     settings: Annotated[Settings, Depends(get_settings)],
+    _: Annotated[None, Depends(consume_upload_quota)],
 ) -> PolicyUploadResponse:
     if not confirm_safe_data:
         raise HTTPException(

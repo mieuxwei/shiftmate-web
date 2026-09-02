@@ -1,0 +1,14 @@
+{
+  "name": "daily-maintenance",
+  "description": "Idempotent cleanup only; no embedding batch work.",
+  "schedule": "15 3 * * *",
+  "timeZone": "Asia/Taipei",
+  "httpMethod": "POST",
+  "relativePath": "/api/v1/internal/daily-maintenance",
+  "oidc": {
+    "serviceAccount": "scheduler-invoker@PROJECT_ID.iam.gserviceaccount.com",
+    "audience": "https://SERVICE_HOST"
+  },
+  "headers": {"X-CloudScheduler-JobName": "daily-maintenance"},
+  "retry": {"maxRetryDuration": "3600s", "maxDoublings": 3}
+}

@@ -7,6 +7,11 @@ from sqlalchemy import Connection
 from backend.app.api.v1.analytics import get_analytics_service
 from backend.app.api.v1.policies import get_policy_service
 from backend.app.core.database import user_connection
+from backend.app.core.quotas import (
+    RequestQuotaGuard,
+    get_request_quota_guard,
+    quota_callback,
+)
 from backend.app.core.settings import Settings, get_settings
 from backend.app.integrations.gemini_assistant import GeminiAssistantAdapter
 from backend.app.integrations.gemini_rag import GeminiEmbeddings, GeminiRagError
@@ -25,6 +30,7 @@ router = APIRouter(prefix="/assistant", tags=["assistant"])
 
 def get_assistant_model(
     settings: Annotated[Settings, Depends(get_settings)],
+    quota_guard: Annotated[RequestQuotaGuard, Depends(get_request_quota_guard)],
 ) -> GeminiAssistantAdapter | None:
     if not settings.gemini_api_key:
         return None
@@ -32,11 +38,13 @@ def get_assistant_model(
         settings.gemini_api_key,
         settings.gemini_model,
         settings.gemini_timeout_seconds,
+        quota_callback(quota_guard),
     )
 
 
 def get_assistant_embeddings(
     settings: Annotated[Settings, Depends(get_settings)],
+    quota_guard: Annotated[RequestQuotaGuard, Depends(get_request_quota_guard)],
 ) -> Embeddings | None:
     if not settings.gemini_api_key:
         return None
@@ -45,6 +53,7 @@ def get_assistant_embeddings(
         settings.gemini_embedding_model,
         settings.gemini_timeout_seconds,
         settings.gemini_embedding_dimensions,
+        quota_callback(quota_guard),
     )
 
 

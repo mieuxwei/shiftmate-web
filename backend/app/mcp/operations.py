@@ -7,7 +7,12 @@ from langchain_core.embeddings import Embeddings
 from sqlalchemy import Connection, Engine
 
 from backend.app.core.auth import AuthenticatedUser
-from backend.app.core.database import authenticated_connection, build_engine
+from backend.app.core.database import (
+    authenticated_connection,
+    build_engine,
+    build_quota_engine,
+)
+from backend.app.core.quotas import RequestQuotaGuard
 from backend.app.core.settings import Settings
 from backend.app.integrations.gemini_assistant import GeminiAssistantAdapter
 from backend.app.integrations.gemini_rag import GeminiEmbeddings, GeminiRagError
@@ -137,7 +142,7 @@ class DatabaseMcpOperations:
         self, user: AuthenticatedUser, question: str
     ) -> PolicySearchResult:
         def operation(connection: Connection) -> PolicySearchResult:
-            embeddings = self._required_embeddings()
+            embeddings = self._required_embeddings(user)
             evidence = self.policy_service.retrieve_evidence(
                 connection,
                 question,
@@ -161,11 +166,11 @@ class DatabaseMcpOperations:
         date_to: date,
     ) -> ComplianceAnalysisResult:
         def operation(connection: Connection) -> ComplianceAnalysisResult:
-            model = self._assistant_model()
+            model = self._assistant_model(user)
             service = build_assistant_service(
                 self.analytics_service,
                 self.policy_service,
-                self._optional_embeddings(),
+                self._optional_embeddings(user),
                 model,
                 top_k=self.settings.rag_top_k,
                 score_threshold=self.settings.rag_score_threshold,
@@ -219,7 +224,7 @@ class DatabaseMcpOperations:
             self.settings.database_max_overflow,
         )
 
-    def _required_embeddings(self) -> Embeddings:
+    def _required_embeddings(self, user: AuthenticatedUser) -> Embeddings:
         if not self.settings.gemini_api_key:
             raise GeminiRagError("GEMINI_NOT_CONFIGURED")
         return GeminiEmbeddings(
@@ -227,20 +232,32 @@ class DatabaseMcpOperations:
             self.settings.gemini_embedding_model,
             self.settings.gemini_timeout_seconds,
             self.settings.gemini_embedding_dimensions,
+            self._quota_guard(user).consume_gemini_request,
         )
 
-    def _optional_embeddings(self) -> Embeddings | None:
+    def _optional_embeddings(self, user: AuthenticatedUser) -> Embeddings | None:
         if not self.settings.gemini_api_key:
             return None
-        return self._required_embeddings()
+        return self._required_embeddings(user)
 
-    def _assistant_model(self) -> GeminiAssistantAdapter | None:
+    def _assistant_model(
+        self, user: AuthenticatedUser
+    ) -> GeminiAssistantAdapter | None:
         if not self.settings.gemini_api_key:
             return None
         return GeminiAssistantAdapter(
             self.settings.gemini_api_key,
             self.settings.gemini_model,
             self.settings.gemini_timeout_seconds,
+            self._quota_guard(user).consume_gemini_request,
+        )
+
+    def _quota_guard(self, user: AuthenticatedUser) -> RequestQuotaGuard:
+        return RequestQuotaGuard(
+            build_quota_engine(self.settings.database_url or ""),
+            user,
+            self.settings.gemini_daily_request_cap,
+            self.settings.upload_daily_cap_per_owner,
         )
 
 

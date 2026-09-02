@@ -25,26 +25,25 @@ is required. At handoff, update `docs/project-state.md` and
 
 #### Current progress (2026-09-03)
 
-- Six typed read-only tools reuse shift, analytics, policy, assistant, and ICS
-  application services; tool arguments expose neither owner override nor SQL.
-- stdio authenticates from a process-only Supabase user token. Streamable HTTP
-  is bearer-protected, Host/Origin checked, JSON-only, 64 KiB bounded, and
-  stateless across restarts and instances.
-- Every operation opens a fresh authenticated-role transaction with the
-  verified owner claim, retaining PostgreSQL RLS as the data boundary.
-- Structured audit events record tool/outcome/duration/request and a hashed
-  owner reference without tokens, arguments, schedules, policy text, or output.
-- Inspector and Python client demo instructions are documented. All tests use
-  synthetic data; no live credential, model call, paid resource, or cloud
-  provisioning was used.
+- API/MCP Gemini calls share a durable daily cap; owner uploads have a durable
+  daily quota, and a bounded process-local limiter protects the max-one-instance
+  HTTP deployment.
+- Safe errors and structured logs exclude credentials, bodies, query strings,
+  document content, owner identifiers, and raw exception messages.
+- `daily-maintenance` verifies Google OIDC, uses a narrow NOLOGIN database role,
+  and claims a unique logical run date so duplicate delivery is a no-op.
+- Versioned Cloud Run/Artifact/Scheduler/IAM policies and the zero-cost runbook
+  define request-based/min0/max1/no-GPU/no-VPC controls, cleanup, budgets, stop,
+  and teardown. No cloud resource or paid feature was created.
 
 #### Acceptance gate
 
-- MCP 與 REST 相同 input 產生一致結果。
-- Tool 無 raw SQL 或 owner override。
-- 未授權 request 被拒絕。
-- Tools 在重啟／scale-to-zero 後不依賴記憶體 session。
+- Duplicate scheduled invocation 無副作用。
+- Unauthorized internal endpoint request 失敗。
+- Cloud Run config 明確為 request-based/min0/max1/no GPU/no VPC connector。
+- Artifact cleanup 將 production + rollback 預估 storage 控制在 0.5 GiB 內。
+- 無未批准 GCP resources。
 
 #### Codex usage
 
-Elevated at tool contract and auth boundary；bounded security review complete.
+Elevated；bounded IAM/cost review complete.

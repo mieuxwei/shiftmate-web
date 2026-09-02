@@ -1,0 +1,12 @@
+[
+  {
+    "name": "delete-old-images",
+    "action": {"type": "Delete"},
+    "condition": {"tagState": "any", "olderThan": "1d"}
+  },
+  {
+    "name": "keep-production-and-rollback",
+    "action": {"type": "Keep"},
+    "mostRecentVersions": {"keepCount": 2}
+  }
+]

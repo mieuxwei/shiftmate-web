@@ -12,6 +12,12 @@ from backend.app.core.database import (
     get_database_engine,
     user_connection,
 )
+from backend.app.core.quotas import (
+    RequestQuotaGuard,
+    consume_upload_quota,
+    get_request_quota_guard,
+    quota_callback,
+)
 from backend.app.core.settings import Settings, get_settings
 from backend.app.integrations.gemini import GeminiScheduleExtractor, ScheduleExtractor
 from backend.app.repositories.imports import ImportRepository, PostgresImportRepository
@@ -43,6 +49,7 @@ def get_import_repository() -> PostgresImportRepository:
 
 def get_schedule_extractor(
     settings: Annotated[Settings, Depends(get_settings)],
+    quota_guard: Annotated[RequestQuotaGuard, Depends(get_request_quota_guard)],
 ) -> ScheduleExtractor:
     if not settings.gemini_api_key:
         raise HTTPException(status_code=503, detail="GEMINI_NOT_CONFIGURED")
@@ -50,6 +57,7 @@ def get_schedule_extractor(
         settings.gemini_api_key,
         settings.gemini_model,
         settings.gemini_timeout_seconds,
+        quota_callback(quota_guard),
     )
 
 
@@ -69,6 +77,7 @@ async def create_import(
     service: Annotated[ImportService, Depends(get_import_service)],
     extractor: Annotated[ScheduleExtractor, Depends(get_schedule_extractor)],
     settings: Annotated[Settings, Depends(get_settings)],
+    _: Annotated[None, Depends(consume_upload_quota)],
 ) -> ShiftImportResponse:
     try:
         upload = await validate_to_temporary_file(

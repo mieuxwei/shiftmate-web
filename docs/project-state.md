@@ -4,8 +4,8 @@ Last updated: 2026-09-03
 
 ## Current position
 
-- Last completed milestone: **M8 — MCP Server**
-- Active milestone: **None; M9 not started**
+- Last completed milestone: **M9 — Security, scheduling and cost controls**
+- Active milestone: **None; M10 not started**
 - Blockers: none
 
 ## Completed
@@ -28,6 +28,21 @@ Last updated: 2026-09-03
   proxy workflow; pnpm dependencies use isolated named volumes.
 
 ## Latest milestone
+
+- M9 is complete: the API has bounded process-local rate limiting for the
+  max-one-instance deployment, durable per-owner upload quotas, and an
+  application-wide daily Gemini request cap shared by REST and MCP.
+- Safe error handlers and structured HTTP logs expose only bounded codes,
+  normalized paths, request IDs, status, method, and duration; request bodies,
+  query strings, credentials, document content, and owner identifiers are
+  omitted.
+- The one `daily-maintenance` endpoint verifies Google-signed OIDC audience and
+  exact service-account identity, then uses the NOLOGIN
+  `shiftmate_maintenance` role. Unique logical dates make duplicate calls
+  no-ops while failed or stale claims remain safely retryable.
+- Versioned policies fix Cloud Run at request-based/min0/max1/one container/no
+  GPU/no VPC connector, retain only production plus one rollback image, and
+  document budget/spend-cap, 0.5 GiB storage, stop, and teardown controls.
 
 - M8 is complete: six typed read-only MCP tools expose owner-scoped shifts,
   deterministic work hours and estimated pay, policy retrieval, hybrid
@@ -105,9 +120,8 @@ Last updated: 2026-09-03
 
 ## Next task packet
 
-Begin M9 with request rate limits, upload/Gemini caps, structured safe error
-logging, and the zero-cost Cloud Run/IAM design. Stop before creating any cloud
-resource, attaching a paid feature, or using a live credential.
+Begin M10 with reproducible OCR, RAG, routing, and failure-mode reports. Keep
+evaluation offline and synthetic; do not depend on a paid platform.
 
 ## Known risks
 

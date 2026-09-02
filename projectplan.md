@@ -777,7 +777,7 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M6 | LangGraph hybrid assistant | M3, M5 | COMPLETE |
 | M7 | Google Calendar and ICS | M3 | COMPLETE |
 | M8 | MCP Server | M3, M5, M6 | COMPLETE |
-| M9 | Security, scheduling and cost controls | M4, M5, M7, M8 | NOT_STARTED |
+| M9 | Security, scheduling and cost controls | M4, M5, M7, M8 | COMPLETE |
 | M10 | AI evaluation and reliability | M4, M5, M6 | NOT_STARTED |
 | M11 | Cloud Run CI/CD deployment | M9, M10 | NOT_STARTED |
 | M12 | Portfolio release | M11 | NOT_STARTED |
@@ -1089,6 +1089,19 @@ Elevated at tool contract and auth boundary；完成後 MAY bounded MCP security
 - Cloud Run min/max/billing config files/scripts。
 - `docs/zero-cost-operations.md`。
 - GCP budget/spend-cap checklist。
+
+#### Completion notes
+
+- Durable owner upload quotas and an application-wide Gemini request cap are
+  enforced before external model calls across REST and MCP; the HTTP surface
+  also has a bounded max-one-instance rate limiter and safe structured errors.
+- `daily-maintenance` verifies Google-signed OIDC claims, uses a narrow NOLOGIN
+  database role, claims a unique logical date, and safely skips duplicates.
+- Versioned Cloud Run, Artifact Registry cleanup, Scheduler, IAM, validation,
+  budget, incident-stop, and teardown policies define the zero-cost envelope.
+- The complete M9 gate passed on 2026-09-03 with synthetic local tests only. No
+  GCP resource, live credential, private data, paid feature, or model call was
+  used.
 
 #### Acceptance gate
 

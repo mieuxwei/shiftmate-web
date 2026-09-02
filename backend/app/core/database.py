@@ -5,6 +5,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy.pool import NullPool
 
 from backend.app.core.auth import AuthenticatedUser, get_current_user
 from backend.app.core.settings import Settings, get_settings
@@ -17,6 +18,16 @@ def build_engine(url: str, pool_size: int, max_overflow: int) -> Engine:
         pool_pre_ping=True,
         pool_size=pool_size,
         max_overflow=max_overflow,
+        connect_args={"prepare_threshold": None},
+    )
+
+
+@lru_cache
+def build_quota_engine(url: str) -> Engine:
+    return create_engine(
+        url,
+        poolclass=NullPool,
+        pool_pre_ping=True,
         connect_args={"prepare_threshold": None},
     )
 
@@ -56,4 +67,13 @@ def authenticated_connection(
             text("SELECT set_config('request.jwt.claim.sub', :user_id, true)"),
             {"user_id": str(user.id)},
         )
+        yield connection
+
+
+@contextmanager
+def maintenance_connection(engine: Engine, role: str) -> Iterator[Connection]:
+    if role != "shiftmate_maintenance":
+        raise RuntimeError("Maintenance database role is not allowlisted")
+    with engine.begin() as connection:
+        connection.exec_driver_sql("SET LOCAL ROLE shiftmate_maintenance")
         yield connection

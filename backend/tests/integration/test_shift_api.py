@@ -78,7 +78,13 @@ def api_database(
             "GRANT SELECT, INSERT, UPDATE, DELETE "
             "ON profiles, shifts, pay_rates, shift_imports, shift_import_items, "
             "policy_documents, policy_chunks, calendar_connections, "
-            "calendar_sync_records "
+            "calendar_sync_records, owner_daily_quotas "
+            "TO authenticated"
+        )
+        admin.execute(
+            "GRANT EXECUTE ON FUNCTION "
+            "app_private.consume_owner_daily_quota(text, integer), "
+            "app_private.consume_app_daily_quota(text, integer) "
             "TO authenticated"
         )
         admin.execute(

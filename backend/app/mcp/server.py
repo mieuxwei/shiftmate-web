@@ -17,6 +17,7 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 from starlette.applications import Starlette
 
 from backend.app.core.auth import AuthenticatedUser
+from backend.app.core.quotas import QuotaExceededError
 from backend.app.core.settings import Settings, get_settings
 from backend.app.integrations.gemini_rag import GeminiRagError
 from backend.app.mcp.auth import (
@@ -252,6 +253,8 @@ def _safe_error_code(error: Exception) -> str:
     if isinstance(error, McpOperationError):
         return error.code
     if isinstance(error, GeminiRagError):
+        return error.code
+    if isinstance(error, QuotaExceededError):
         return error.code
     if isinstance(error, ProfileNotFoundError):
         return "PROFILE_NOT_FOUND"

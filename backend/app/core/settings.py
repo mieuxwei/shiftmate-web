@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     rag_score_threshold: float = Field(default=0.55, ge=-1, le=1)
     upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1)
     upload_pdf_max_pages: int = Field(default=40, ge=1, le=40)
+    upload_daily_cap_per_owner: int = Field(default=10, ge=1, le=100)
+    gemini_daily_request_cap: int = Field(default=50, ge=1, le=1000)
+    api_rate_limit_per_minute: int = Field(default=120, ge=1, le=1000)
     google_oauth_client_id: str | None = None
     google_oauth_client_secret: str | None = None
     google_oauth_redirect_uri: str | None = None
@@ -47,6 +50,12 @@ class Settings(BaseSettings):
             "http://test",
         ]
     )
+    scheduler_oidc_audience: str | None = None
+    scheduler_service_account_email: str | None = None
+    scheduler_job_name: str = "daily-maintenance"
+    database_maintenance_role: str = "shiftmate_maintenance"
+    maintenance_draft_ttl_days: int = Field(default=7, ge=1, le=30)
+    maintenance_retention_days: int = Field(default=30, ge=7, le=90)
 
 
 @lru_cache

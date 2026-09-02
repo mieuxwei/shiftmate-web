@@ -3,6 +3,57 @@
 Record commands and observable results here at milestone gates. Do not record
 secrets, tokens, private source data, or full model payloads.
 
+## 2026-09-03 — M9 security, scheduling and cost controls milestone gate
+
+- Added a bounded 120 request/minute per-peer HTTP limiter for API/MCP traffic
+  under the required max-one-instance Cloud Run envelope. Health remains
+  available for probes. Rejections return safe 429 codes and `Retry-After`.
+- Added durable per-owner upload counters (default 10/day) and a durable
+  application-wide Gemini request counter (default 50/day). Every external
+  Gemini generation/embedding call in REST and MCP reserves a unit through a
+  short-lived independent database connection, avoiding request-pool deadlock.
+- Added safe FastAPI error mapping and structured JSON request logs. Synthetic
+  tests prove bearer content, query values, and resource UUIDs are absent; logs
+  contain normalized path, method, status, duration, and request ID only.
+- Added Google-signed Scheduler OIDC validation for exact audience, issuer,
+  verified service-account email, job name, and schedule time. An unauthenticated
+  production-container call returned 401 `SCHEDULER_UNAUTHORIZED`.
+- Added migration `20260903_0006`: forced-RLS owner/application quota tables,
+  restricted `SECURITY DEFINER` quota functions with hard ceilings, and the
+  NOLOGIN `shiftmate_maintenance` role with narrow grants/policies.
+- Added idempotent `daily-maintenance`: a unique logical date claim makes a
+  duplicate invocation return `skipped`; stale/failed claims can retry. The job
+  expires/deletes old import drafts, closes stale policy/calendar statuses, and
+  prunes quota/audit rows without calling Gemini.
+- Added versioned Cloud Run, Artifact Registry cleanup, Scheduler, and IAM
+  policies plus `docs/zero-cost-operations.md`. Static validation proves
+  request-based billing, cpu throttling, min 0, max 1, one container, no GPU,
+  no VPC connector, and retention of at most production plus one rollback.
+- Official policy review on 2026-09-03 reconfirmed request-based Cloud Run
+  behavior, the account-wide 0.5 GiB-month Artifact Registry free allowance,
+  three free Scheduler jobs per billing account, authenticated OIDC targets,
+  cleanup dry runs, and preview spend-cap limitations.
+- Backend gate: Ruff format/check, strict mypy (69 source files), and 89 offline
+  tests passed with 77% aggregate coverage. Disposable PostgreSQL migration,
+  RLS, quota, REST/MCP parity, and maintenance tests passed 18/18 (107 total).
+- Frontend gate passed from an identical `/tmp` Git archive after the known
+  macOS file-provider worker stall: Prettier, ESLint, TypeScript, 11 test files /
+  37 tests, and the Vite production build (444.83 kB JS / 126.00 kB gzip).
+- `docker build -t shiftmate-web:m9 .` passed. The 97,574,057-byte non-root
+  production image served health and React UI; two retained versions project to
+  195,148,114 bytes (about 0.182 GiB), below the 0.40 GiB warning threshold and
+  the 0.5 GiB target.
+- Secret/private-source scans found only synthetic fixtures, type names, and
+  existing prohibition references. The disposable local containers were
+  removed. No GCP resource, live credential, private data, paid feature, or
+  external model call was used.
+
+M9 acceptance passed: repeated scheduled delivery is side-effect-free,
+unauthorized internal requests fail closed, Cloud Run cost controls are
+machine-validated, the artifact policy stays below the storage target, and no
+unapproved resource exists. M9 is complete and awaits explicit approval before
+commit/push.
+
 ## 2026-09-03 — M8 MCP Server milestone gate
 
 - Added the official Python MCP SDK `2.1.1`, a packaged `shiftmate-mcp` stdio

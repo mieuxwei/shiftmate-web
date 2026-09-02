@@ -30,8 +30,9 @@ OWNER_TABLES = {
     "chat_sessions",
     "chat_messages",
     "tool_audit_logs",
+    "owner_daily_quotas",
 }
-APPLICATION_TABLES = OWNER_TABLES | {"scheduled_job_runs"}
+APPLICATION_TABLES = OWNER_TABLES | {"scheduled_job_runs", "app_daily_quotas"}
 
 
 @pytest.fixture(scope="module")
@@ -117,6 +118,7 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
                 FROM pg_policies
                 WHERE schemaname = 'public'
                   AND tablename = ANY(%s)
+                  AND policyname LIKE '%%owner_isolation'
                 """,
                 (list(OWNER_TABLES),),
             ).fetchall()
@@ -226,6 +228,7 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
         assert "current_user_id()" in using_expression
         assert "current_user_id()" in check_expression
     assert "scheduled_job_runs" not in owner_policies
+    assert "app_daily_quotas" not in owner_policies
     assert extension_names == {"pgcrypto", "vector"}
     assert vector_distance == (1.0,)
     assert {

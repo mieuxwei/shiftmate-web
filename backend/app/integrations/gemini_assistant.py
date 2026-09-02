@@ -1,4 +1,5 @@
 import json
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
@@ -15,10 +16,17 @@ PROMPT_DIR = Path(__file__).parents[1] / "ai" / "prompts"
 
 
 class GeminiAssistantAdapter:
-    def __init__(self, api_key: str, model_name: str, timeout_seconds: float) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str,
+        timeout_seconds: float,
+        before_request: Callable[[], None] | None = None,
+    ) -> None:
         self.api_key = api_key
         self.model_name = model_name
         self.timeout_seconds = timeout_seconds
+        self.before_request = before_request
 
     def classify(self, question: str) -> AssistantIntent:
         body = self._generate(
@@ -99,6 +107,8 @@ class GeminiAssistantAdapter:
                     "responseJsonSchema": response_schema,
                 }
             )
+        if self.before_request is not None:
+            self.before_request()
         body = _post_json(
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{self.model_name}:generateContent",

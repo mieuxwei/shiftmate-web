@@ -2,10 +2,20 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from backend.app.api.v1.router import api_router
+from backend.app.core.http_security import (
+    FixedWindowRateLimiter,
+    build_http_guard,
+    quota_exceeded_error,
+    safe_http_error,
+    safe_validation_error,
+)
+from backend.app.core.quotas import QuotaExceededError
 from backend.app.core.settings import get_settings
 from backend.app.mcp.server import build_http_mcp_app
 
@@ -25,6 +35,15 @@ def create_app() -> FastAPI:
         description="API for the ShiftMate Web portfolio application.",
         lifespan=lifespan,
     )
+    app.add_middleware(
+        BaseHTTPMiddleware,
+        dispatch=build_http_guard(
+            FixedWindowRateLimiter(settings.api_rate_limit_per_minute)
+        ),
+    )
+    app.add_exception_handler(HTTPException, safe_http_error)
+    app.add_exception_handler(RequestValidationError, safe_validation_error)
+    app.add_exception_handler(QuotaExceededError, quota_exceeded_error)
     app.include_router(api_router)
     app.mount("/mcp", mcp_http_app, name="mcp")
 
