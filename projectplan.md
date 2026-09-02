@@ -26,6 +26,7 @@
 10. MUST 以預期雲端費用 NT$0 為目標；任何可能導致付費的變更都需要先停下並取得使用者批准。
 11. MUST 在功能與計畫發生偏差時先更新本文件或 ADR，再繼續實作。
 12. MUST 以簡短 handoff 結束每次 Codex 工作：變更檔案、驗證結果、未解風險、下一個 milestone。
+13. MUST 在 milestone gate 通過後等待使用者明確批准該 milestone 的 commit/push；一旦批准，Codex 應自行提交所有已驗證變更並推送目前 branch 至既有 upstream，不需再次詢問。不得 rewrite remote history；push 失敗時只能使用安全、非破壞性的修復方式。
 
 ### 0.3 Codex 使用量治理
 

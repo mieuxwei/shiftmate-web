@@ -25,7 +25,12 @@ sections and relevant files. `projectplan.md` is the source of truth.
 2. Use the task packet in `docs/codex-task-template.md`.
 3. Prefer targeted formatter, type checks, and tests during implementation.
 4. Run the milestone gate before marking it complete.
-5. End with changed files, verification, risks, and the next milestone.
+5. Do not commit or push a completed milestone until the user explicitly
+   approves that milestone's commit/push. Once approved, commit all verified
+   milestone changes and push the current branch to its configured upstream
+   without asking again. Never rewrite remote history; if push fails, diagnose
+   and use only safe, non-destructive recovery.
+6. End with changed files, verification, risks, and the next milestone.
 
 ## Verification commands
 
