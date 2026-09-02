@@ -6,6 +6,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Response, 
 from fastapi.responses import RedirectResponse
 from sqlalchemy import Connection, Engine
 
+from backend.app.api.v1.shifts import get_shift_repository
 from backend.app.core.auth import AuthenticatedUser, get_current_user
 from backend.app.core.database import (
     authenticated_connection,
@@ -21,7 +22,7 @@ from backend.app.repositories.calendar import (
     CalendarRepository,
     PostgresCalendarRepository,
 )
-from backend.app.repositories.shifts import PostgresShiftRepository
+from backend.app.repositories.shifts import ShiftRepository
 from backend.app.schemas.calendar import (
     CalendarConnectResponse,
     CalendarStatusResponse,
@@ -33,6 +34,10 @@ from backend.app.services.calendar import (
     connection_expiry,
     effective_scopes,
 )
+from backend.app.services.calendar_exports import (
+    CalendarExportError,
+    CalendarExportService,
+)
 from backend.app.services.calendar_security import (
     GOOGLE_CALENDAR_EVENTS_SCOPE,
     CalendarSecurityError,
@@ -40,7 +45,6 @@ from backend.app.services.calendar_security import (
     SecretBox,
     build_authorization_url,
 )
-from backend.app.services.ics import export_shifts_to_ics
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
 OAUTH_COOKIE = "shiftmate_calendar_oauth"
@@ -195,16 +199,22 @@ async def sync_calendar(
 @router.get("/export.ics")
 def export_calendar(
     connection: Annotated[Connection, Depends(user_connection)],
+    shift_repository: Annotated[ShiftRepository, Depends(get_shift_repository)],
     date_from: Annotated[date | None, Query()] = None,
     date_to: Annotated[date | None, Query()] = None,
 ) -> Response:
-    if date_from and date_to and date_to < date_from:
-        raise HTTPException(status_code=422, detail="CALENDAR_DATE_RANGE_INVALID")
-    shifts = PostgresShiftRepository().list_shifts(connection, date_from, date_to)
+    try:
+        calendar_export = CalendarExportService(shift_repository).create_export(
+            connection, date_from, date_to
+        )
+    except CalendarExportError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
     return Response(
-        export_shifts_to_ics(shifts, date_from, date_to),
-        media_type="text/calendar; charset=utf-8",
+        calendar_export.content,
+        media_type=calendar_export.media_type,
         headers={
-            "Content-Disposition": 'attachment; filename="shiftmate-schedule.ics"'
+            "Content-Disposition": (
+                f'attachment; filename="{calendar_export.filename}"'
+            )
         },
     )

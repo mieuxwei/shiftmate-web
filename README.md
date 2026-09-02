@@ -10,15 +10,15 @@ not contain or depend on the earlier `line-bot-calendar` project.
 
 ## Current status
 
-Milestones M1–M7 are complete. The application now includes the PostgreSQL/RLS
+Milestones M1–M8 are complete. The application now includes the PostgreSQL/RLS
 foundation, authenticated shift and effective-dated pay-rate CRUD, deterministic
 hours/pay analytics, month/week schedules, dashboard charts, and a credential-free
 synthetic read-only demo, plus a secure Gemini-assisted schedule import flow
 with edit/review/explicit confirmation and idempotent commit, plus owner-scoped
 policy PDF indexing, grounded questions, refusals, and page citations, plus a
 stateless deterministic-first LangGraph assistant, optional idempotent Google
-Calendar sync, and a zero-authorization ICS fallback. M8 (read-only MCP tools)
-is next. See
+Calendar sync, a zero-authorization ICS fallback, and six authenticated,
+owner-scoped read-only MCP tools over stdio and stateless Streamable HTTP. See
 [`docs/project-state.md`](docs/project-state.md) for the concise handoff and
 [`projectplan.md`](projectplan.md) for the complete execution specification.
 
@@ -101,6 +101,13 @@ uses stable external event IDs so retries do not duplicate events. Never commit
 OAuth credentials or token encryption secrets. Without Google configuration,
 authenticated users can still download owner-scoped `.ics` files for the visible
 date range; Calendar failures never modify confirmed shifts.
+
+The read-only MCP server reuses the REST application services for shifts,
+deterministic work hours and estimated pay, owner-scoped policy search,
+schedule-compliance analysis, and in-memory ICS export. It supports an
+authenticated stdio entrypoint (`shiftmate-mcp`) and a bearer-protected,
+stateless endpoint at `/mcp/`. Setup, Inspector, and safe client-demo commands
+are in [`docs/mcp.md`](docs/mcp.md).
 
 For the single-container production-like workflow, run:
 

@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     google_oauth_state_secret: str | None = None
     calendar_token_encryption_key: str | None = None
     google_oauth_timeout_seconds: float = Field(default=15, gt=0, le=60)
+    mcp_allowed_hosts: list[str] = Field(
+        default_factory=lambda: ["127.0.0.1:*", "localhost:*", "test"]
+    )
+    mcp_allowed_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://127.0.0.1:*",
+            "http://localhost:*",
+            "http://test",
+        ]
+    )
 
 
 @lru_cache

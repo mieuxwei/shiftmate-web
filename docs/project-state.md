@@ -1,11 +1,11 @@
 # Project state
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## Current position
 
-- Last completed milestone: **M7 — Google Calendar and ICS**
-- Active milestone: **None; M8 not started**
+- Last completed milestone: **M8 — MCP Server**
+- Active milestone: **None; M9 not started**
 - Blockers: none
 
 ## Completed
@@ -28,6 +28,23 @@ Last updated: 2026-09-02
   proxy workflow; pnpm dependencies use isolated named volumes.
 
 ## Latest milestone
+
+- M8 is complete: six typed read-only MCP tools expose owner-scoped shifts,
+  deterministic work hours and estimated pay, policy retrieval, hybrid
+  compliance analysis, and in-memory ICS export without accepting owner IDs or
+  raw SQL.
+- stdio reads a short-lived Supabase user token only from the process
+  environment. Streamable HTTP is mounted at `/mcp/`, validates bearer tokens,
+  limits requests to 64 KiB, checks Host/Origin allowlists, returns JSON, and is
+  stateless for restart, scale-to-zero, and multi-instance routing.
+- Both transports reuse the REST application services and open a fresh
+  authenticated-role/RLS transaction for each tool call. Audit events omit
+  tokens, arguments, schedule/policy content, and results and store only a
+  shortened one-way owner reference.
+- Synthetic unit/HTTP tests cover all six schemas, read-only annotations,
+  unauthorized rejection, audit redaction, stateless restart behavior, and
+  absence of owner/raw-SQL inputs. A disposable PostgreSQL parity test proves
+  REST/MCP agreement and cross-owner isolation.
 
 - M7 is complete: Google Calendar uses a web-server authorization-code flow
   with PKCE, an encrypted short-lived HttpOnly state cookie, validated local
@@ -88,9 +105,9 @@ Last updated: 2026-09-02
 
 ## Next task packet
 
-Begin M8 with the read-only MCP transport and shared application-service
-adapters, then continue through its complete gate. Keep Calendar export shared
-with REST and MCP, and stop before any paid resource or live credential action.
+Begin M9 with request rate limits, upload/Gemini caps, structured safe error
+logging, and the zero-cost Cloud Run/IAM design. Stop before creating any cloud
+resource, attaching a paid feature, or using a live credential.
 
 ## Known risks
 
@@ -109,3 +126,6 @@ with REST and MCP, and stop before any paid resource or live credential action.
 - Google OAuth and Calendar REST shapes are covered with synthetic contract
   tests. A deployment must register its exact callback URI and provide five
   distinct secret/config values before live connection testing.
+- A deployed MCP hostname and any browser origin must be explicitly added to
+  `MCP_ALLOWED_HOSTS` and `MCP_ALLOWED_ORIGINS`; safe local-only defaults reject
+  unknown hosts until M11 supplies the exact deployment values.

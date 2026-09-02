@@ -1,6 +1,6 @@
 import os
 from collections.abc import Iterator
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from io import BytesIO
 from uuid import UUID, uuid4
 
@@ -24,7 +24,9 @@ from backend.app.api.v1.policies import (
 )
 from backend.app.core.auth import AuthenticatedUser, get_current_user
 from backend.app.core.database import get_database_engine
+from backend.app.core.settings import Settings
 from backend.app.main import app
+from backend.app.mcp.operations import DatabaseMcpOperations
 from backend.app.schemas.imports import ExtractedShift, ScheduleExtraction
 from backend.app.services import policies as policy_service_module
 from backend.app.services.assistant import ComplianceEvaluation
@@ -165,6 +167,60 @@ async def test_shift_create_and_list_are_owner_isolated(
             "SELECT owner_id FROM shifts WHERE id = %s", (created.json()["id"],)
         ).fetchone()
     assert stored_owner == (owner.id,)
+
+
+async def test_mcp_matches_rest_and_preserves_owner_isolation(
+    database_url: str, api_database: tuple[Engine, AuthenticatedUser, UUID]
+) -> None:
+    _, owner, _ = api_database
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        created_shift = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-06T01:00:00Z",
+                "end_at": "2026-09-06T09:00:00Z",
+                "break_minutes": 60,
+                "shift_type": "day",
+                "notes": "Synthetic MCP parity shift",
+            },
+        )
+        created_rate = await client.post(
+            "/api/v1/pay-rates",
+            json={"hourly_rate": "200.00", "effective_from": "2026-01-01"},
+        )
+        rest_shifts = await client.get(
+            "/api/v1/shifts",
+            params={"date_from": "2026-09-06", "date_to": "2026-09-06"},
+        )
+        rest_summary = await client.get(
+            "/api/v1/analytics/summary",
+            params={"date_from": "2026-09-06", "date_to": "2026-09-06"},
+        )
+
+    assert created_shift.status_code == 201
+    assert created_rate.status_code == 201
+    assert rest_shifts.status_code == 200
+    assert rest_summary.status_code == 200
+
+    operations = DatabaseMcpOperations(Settings(database_url=database_url))
+    mcp_shifts = await operations.get_shifts(owner, date(2026, 9, 6), date(2026, 9, 6))
+    mcp_hours = await operations.calculate_work_hours(
+        owner, date(2026, 9, 6), date(2026, 9, 6)
+    )
+    mcp_pay = await operations.get_payroll_summary(
+        owner, date(2026, 9, 6), date(2026, 9, 6)
+    )
+    mcp_export = await operations.create_calendar_export(
+        owner, date(2026, 9, 6), date(2026, 9, 6)
+    )
+
+    assert mcp_shifts.model_dump(mode="json")["shifts"] == rest_shifts.json()
+    assert str(mcp_hours.total_paid_hours) == rest_summary.json()["total_paid_hours"]
+    assert mcp_hours.shift_count == rest_summary.json()["shift_count"]
+    assert str(mcp_pay.estimated_pay) == rest_summary.json()["estimated_pay"]
+    assert mcp_pay.currency == rest_summary.json()["currency"]
+    assert str(created_shift.json()["id"]) in mcp_export.content
 
 
 class SyntheticExtractor:

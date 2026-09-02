@@ -1,4 +1,4 @@
-from typing import Annotated, cast
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from langchain_core.embeddings import Embeddings
@@ -16,12 +16,8 @@ from backend.app.services.analytics import (
     AnalyticsService,
     AnalyticsServiceError,
 )
-from backend.app.services.assistant import (
-    AssistantAnswerer,
-    AssistantService,
-    IntentClassifier,
-)
-from backend.app.services.policies import PolicyEvidence, PolicyService
+from backend.app.services.assistant_factory import build_assistant_service
+from backend.app.services.policies import PolicyService
 from backend.app.services.shifts import ProfileNotFoundError
 
 router = APIRouter(prefix="/assistant", tags=["assistant"])
@@ -62,24 +58,13 @@ def query_assistant(
     model: Annotated[GeminiAssistantAdapter | None, Depends(get_assistant_model)],
     embeddings: Annotated[Embeddings | None, Depends(get_assistant_embeddings)],
 ) -> AssistantQueryResponse:
-    def load_policy_evidence(
-        request_connection: Connection, question: str
-    ) -> list[PolicyEvidence]:
-        if embeddings is None:
-            raise GeminiRagError("GEMINI_NOT_CONFIGURED")
-        return policies.retrieve_evidence(
-            request_connection,
-            question,
-            embeddings,
-            settings.rag_top_k,
-            settings.rag_score_threshold,
-        )
-
-    service = AssistantService(
+    service = build_assistant_service(
         analytics,
-        load_policy_evidence,
-        cast(AssistantAnswerer, model) if model else _UnavailableAssistantModel(),
-        classifier=cast(IntentClassifier, model) if model else None,
+        policies,
+        embeddings,
+        model,
+        top_k=settings.rag_top_k,
+        score_threshold=settings.rag_score_threshold,
     )
     try:
         return service.query(
@@ -94,15 +79,3 @@ def query_assistant(
         raise HTTPException(status_code=404, detail=str(error)) from error
     except (AnalyticsServiceError, AnalyticsCalculationError, ValueError) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-
-
-class _UnavailableAssistantModel:
-    model_name = "unavailable"
-
-    def answer_policy(self, question: str, evidence: list[PolicyEvidence]) -> str:
-        del question, evidence
-        raise GeminiRagError("GEMINI_NOT_CONFIGURED")
-
-    def answer_hybrid(self, *args: object) -> str:
-        del args
-        raise GeminiRagError("GEMINI_NOT_CONFIGURED")

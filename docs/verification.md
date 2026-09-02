@@ -3,6 +3,57 @@
 Record commands and observable results here at milestone gates. Do not record
 secrets, tokens, private source data, or full model payloads.
 
+## 2026-09-03 — M8 MCP Server milestone gate
+
+- Added the official Python MCP SDK `2.1.1`, a packaged `shiftmate-mcp` stdio
+  entrypoint, and a stateless JSON Streamable HTTP app mounted at `/mcp/` in the
+  existing FastAPI/Cloud Run container. HTTP requests are limited to 64 KiB and
+  checked against explicit Host and Origin allowlists.
+- Added six typed, read-only tools: `get_shifts`, `calculate_work_hours`,
+  `get_payroll_summary`, `search_work_policy`,
+  `analyze_schedule_compliance`, and `create_calendar_export`. Schema tests
+  prove no input accepts an owner identifier or raw SQL and every tool advertises
+  a structured output schema plus read-only/non-destructive annotations.
+- Reused `ShiftService`, `AnalyticsService`, `PolicyService`, `AssistantService`,
+  and the new shared `CalendarExportService`; REST calendar export now uses the
+  same service as MCP. No MCP adapter calculates pay, executes caller-provided
+  SQL, mutates confirmed shifts, or writes Calendar events.
+- Adapted the existing Supabase JWT verification to MCP bearer auth. stdio reads
+  the token only from `SHIFTMATE_MCP_ACCESS_TOKEN`; HTTP gets the verified token
+  from request context. Each tool opens a fresh `authenticated`-role transaction
+  with the verified owner UUID so ordinary requests retain RLS isolation.
+- Audit events include only tool name, safe outcome, request ID, duration, and a
+  shortened SHA-256 owner reference. Synthetic tests confirm raw owner UUIDs and
+  tokens are absent from audit messages.
+- MCP unit/transport gate: 7 focused auth/server tests passed. Missing HTTP auth
+  returned 401; in-process unauthorized calls returned `UNAUTHORIZED`; two
+  independently constructed stateless HTTP servers returned the same tool result
+  without `Mcp-Session-Id`.
+- Disposable PostgreSQL integration gate: 16/16 tests passed. The M8 parity case
+  compared REST and MCP shift rows, hours, estimated pay/currency, and ICS for
+  the same date input and verified the other owner's seeded row was hidden.
+- Python gate: Ruff format/check passed, strict mypy passed for 63 source files,
+  and the full suite passed with 85 tests plus 16 integration tests (101 total;
+  78% aggregate `backend.app` coverage in the non-database run).
+- The inherited OCR feature gate remained green: all four positive metrics were
+  1.0 and both missing/extra shift rates were 0.0.
+- Frontend format, ESLint, strict TypeScript, 37/37 tests, and production build
+  passed from an identical `/tmp` copy (76 modules, 444.83 kB JavaScript / 126.00
+  kB gzip). The direct working-tree Vitest fork pool hit the already documented
+  macOS file-provider worker timeout before loading tests; format, lint, and
+  typecheck passed directly before the copy-based rerun.
+- `docker build -t shiftmate-web:m8 .` passed. The non-root production container
+  ran as uid 100, served the production health response, returned a safe 401 for
+  an unauthenticated `/mcp/` request, and contained the packaged
+  `/usr/local/bin/shiftmate-mcp` entrypoint.
+- The bundled stdio Python client listed exactly the six tools. No live token,
+  private data, Gemini call, paid resource, or cloud provisioning was used.
+
+M8 acceptance passed: REST/MCP semantics are shared, the tool surface has no
+owner override or SQL input, unauthorized calls fail closed, and Streamable HTTP
+requires no in-memory session across restarts or scale-to-zero. M8 is complete
+and awaits explicit approval before commit/push.
+
 ## 2026-09-02 — M7 Google Calendar and ICS milestone gate
 
 - Added web-server OAuth authorization-code flow with S256 PKCE, encrypted
