@@ -10,7 +10,7 @@ not contain or depend on the earlier `line-bot-calendar` project.
 
 ## Current status
 
-Milestones M1–M8 are complete. The application now includes the PostgreSQL/RLS
+Milestones M1–M10 are complete. The application now includes the PostgreSQL/RLS
 foundation, authenticated shift and effective-dated pay-rate CRUD, deterministic
 hours/pay analytics, month/week schedules, dashboard charts, and a credential-free
 synthetic read-only demo, plus a secure Gemini-assisted schedule import flow
@@ -21,6 +21,12 @@ Calendar sync, a zero-authorization ICS fallback, and six authenticated,
 owner-scoped read-only MCP tools over stdio and stateless Streamable HTTP. See
 [`docs/project-state.md`](docs/project-state.md) for the concise handoff and
 [`projectplan.md`](projectplan.md) for the complete execution specification.
+
+The versioned M10 evaluation suite rebuilds OCR, RAG, and deterministic routing
+reports entirely offline from synthetic fixtures. Reports show sample counts,
+metrics, observed failures, and limitations rather than only successful cases.
+Deterministic failure injection also covers Gemini, Supabase JWKS, and Google
+Calendar unavailability. See [`evals/reports/summary.md`](evals/reports/summary.md).
 
 ## Product boundaries
 
@@ -128,6 +134,7 @@ ruff check .
 mypy
 pytest --cov=backend.app --cov-report=term-missing
 python evals/rag/evaluate.py
+python evals/run.py --check
 pnpm --dir frontend format
 pnpm --dir frontend lint
 pnpm --dir frontend typecheck

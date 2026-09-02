@@ -25,25 +25,23 @@ is required. At handoff, update `docs/project-state.md` and
 
 #### Current progress (2026-09-03)
 
-- API/MCP Gemini calls share a durable daily cap; owner uploads have a durable
-  daily quota, and a bounded process-local limiter protects the max-one-instance
-  HTTP deployment.
-- Safe errors and structured logs exclude credentials, bodies, query strings,
-  document content, owner identifiers, and raw exception messages.
-- `daily-maintenance` verifies Google OIDC, uses a narrow NOLOGIN database role,
-  and claims a unique logical run date so duplicate delivery is a no-op.
-- Versioned Cloud Run/Artifact/Scheduler/IAM policies and the zero-cost runbook
-  define request-based/min0/max1/no-GPU/no-VPC controls, cleanup, budgets, stop,
-  and teardown. No cloud resource or paid feature was created.
+- One offline runner rebuilds versioned OCR, RAG, routing, and Markdown summary
+  reports from synthetic fixtures, or fails when committed reports are stale.
+- Reports expose sample counts, metrics, observed failures, and explicit
+  limitations. Offline baselines intentionally include representative misses.
+- Deterministic failure injection covers Gemini import failure, unavailable
+  Supabase JWKS, and unavailable Google Calendar without accepting identity,
+  creating shifts, or changing confirmed shift truth.
+- CI verifies report freshness. No credential, private data, live model,
+  external API, paid platform, or cloud resource was used.
 
 #### Acceptance gate
 
-- Duplicate scheduled invocation 無副作用。
-- Unauthorized internal endpoint request 失敗。
-- Cloud Run config 明確為 request-based/min0/max1/no GPU/no VPC connector。
-- Artifact cleanup 將 production + rollback 預估 storage 控制在 0.5 GiB 內。
-- 無未批准 GCP resources。
+- Reports 由版本化 fixtures 重建。
+- 指標、sample count、限制與失敗案例可見。
+- 不只挑選成功案例。
+- Evaluation 不依賴 paid platform。
 
 #### Codex usage
 
-Elevated；bounded IAM/cost review complete.
+Elevated metric design and failure analysis complete; report generation routine.

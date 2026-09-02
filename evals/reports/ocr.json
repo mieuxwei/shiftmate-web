@@ -1,0 +1,37 @@
+{
+  "date_exact_match": 0.8888888888888888,
+  "expected_item_count": 9,
+  "extra_shift_rate": 0.0,
+  "failure_count": 3,
+  "failures": [
+    {
+      "id": "skewed",
+      "reasons": [
+        "time_mismatch"
+      ]
+    },
+    {
+      "id": "multiple-dates",
+      "reasons": [
+        "missing_shift"
+      ]
+    },
+    {
+      "id": "illegible",
+      "reasons": [
+        "missed_review_flag"
+      ]
+    }
+  ],
+  "limitations": [
+    "Synthetic structured outputs do not measure image decoding quality.",
+    "Position-based item matching can penalize reordered shifts.",
+    "Nine cases are directional evidence, not a production benchmark."
+  ],
+  "missing_shift_rate": 0.1111111111111111,
+  "needs_review_recall": 0.8,
+  "predicted_item_count": 8,
+  "sample_count": 9,
+  "schema_valid_rate": 1.0,
+  "time_exact_match": 0.7777777777777778
+}

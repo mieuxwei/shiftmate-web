@@ -1,0 +1,20 @@
+[
+  {
+    "id": "gemini-unavailable-import",
+    "dependency": "Gemini",
+    "expected_behavior": "Persist a bounded retryable failure code and create no candidate shifts.",
+    "test": "backend/tests/test_import_service.py::test_gemini_failure_is_persisted_with_safe_retryable_code"
+  },
+  {
+    "id": "supabase-jwks-unavailable",
+    "dependency": "Supabase Auth JWKS",
+    "expected_behavior": "Fail closed as an invalid bearer token without accepting an unverifiable identity.",
+    "test": "backend/tests/test_auth.py::test_supabase_jwks_unavailable_fails_closed"
+  },
+  {
+    "id": "calendar-api-unavailable",
+    "dependency": "Google Calendar",
+    "expected_behavior": "Record a retryable sync failure while preserving confirmed shift truth.",
+    "test": "backend/tests/test_calendar_service.py::test_provider_failure_is_retryable_and_shift_truth_is_unchanged"
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "average_latency_ms": 73.0,
+  "citation_correctness": 1.0,
+  "failure_count": 1,
+  "failures": [
+    {
+      "id": "conflicting-overtime",
+      "reasons": [
+        "retrieval_miss",
+        "ungrounded_answer",
+        "refusal_error"
+      ]
+    }
+  ],
+  "gemini_call_count": 9.0,
+  "groundedness": 0.8,
+  "limitations": [
+    "Synthetic chunks do not represent every PDF layout or language variant.",
+    "Groundedness is a versioned human label, not an automated fact checker.",
+    "Latency values are captured fixture data, not live provider performance."
+  ],
+  "recall_at_k": 0.9,
+  "refusal_accuracy": 0.8,
+  "sample_count": 5
+}

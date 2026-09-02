@@ -1,0 +1,32 @@
+{
+  "accuracy": 0.8333333333333334,
+  "confusion": {
+    "hybrid->hybrid": 2,
+    "policy->ambiguous": 1,
+    "policy->policy": 2,
+    "schedule->ambiguous": 1,
+    "schedule->schedule": 3,
+    "unsupported->unsupported": 3
+  },
+  "deterministic_coverage": 0.8333333333333334,
+  "failure_count": 2,
+  "failures": [
+    {
+      "actual": "ambiguous",
+      "expected": "policy",
+      "id": "terse-leave"
+    },
+    {
+      "actual": "ambiguous",
+      "expected": "schedule",
+      "id": "terse-week"
+    }
+  ],
+  "fallback_count": 2,
+  "limitations": [
+    "Keyword routing is intentionally conservative and may defer terse queries.",
+    "The fixture does not estimate accuracy of the optional Gemini fallback.",
+    "Twelve synthetic questions are directional evidence, not traffic telemetry."
+  ],
+  "sample_count": 12
+}

@@ -7,6 +7,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from jwt import PyJWK
 from jwt.algorithms import RSAAlgorithm
+from jwt.exceptions import PyJWKClientConnectionError
 
 from backend.app.core.auth import InvalidAccessToken, SupabaseJwtVerifier
 
@@ -17,6 +18,11 @@ class StaticJwksClient:
 
     def get_signing_key_from_jwt(self, token: str) -> PyJWK:
         return self.key
+
+
+class UnavailableJwksClient:
+    def get_signing_key_from_jwt(self, token: str) -> PyJWK:
+        raise PyJWKClientConnectionError("synthetic upstream unavailable")
 
 
 def verifier_and_key() -> tuple[SupabaseJwtVerifier, rsa.RSAPrivateKey]:
@@ -63,6 +69,19 @@ def test_verifier_accepts_authenticated_user_token() -> None:
 
     assert str(user.id) == user_id
     assert user.role == "authenticated"
+
+
+def test_supabase_jwks_unavailable_fails_closed() -> None:
+    verifier, private_key = verifier_and_key()
+    token, _ = make_token(private_key)
+    unavailable = SupabaseJwtVerifier(
+        verifier.issuer,
+        verifier.audience,
+        UnavailableJwksClient(),
+    )
+
+    with pytest.raises(InvalidAccessToken):
+        unavailable.verify(token)
 
 
 @pytest.mark.parametrize(

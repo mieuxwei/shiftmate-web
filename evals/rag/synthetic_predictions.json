@@ -19,10 +19,10 @@
   },
   {
     "id": "conflicting-overtime",
-    "retrieved_chunk_ids": ["overtime-new-p1", "overtime-old-p4"],
-    "citation_chunk_ids": ["overtime-new-p1", "overtime-old-p4"],
-    "refused": false,
-    "grounded": true,
+    "retrieved_chunk_ids": ["overtime-new-p1"],
+    "citation_chunk_ids": ["overtime-new-p1"],
+    "refused": true,
+    "grounded": false,
     "latency_ms": 91,
     "gemini_call_count": 2
   },

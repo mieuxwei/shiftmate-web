@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 
 def load_evaluator() -> ModuleType:
     path = Path("evals/routing/evaluate.py")
@@ -22,7 +24,11 @@ def test_routing_fixture_covers_all_routes_and_adversarial_boundaries() -> None:
     assert intents == {"schedule", "policy", "hybrid", "unsupported"}
     assert {"prompt-injection-like", "raw-sql", "write", "english"} <= tags
     metrics = load_evaluator().evaluate(cases)
-    assert metrics["sample_count"] == 10
-    assert metrics["accuracy"] == 1.0
-    assert metrics["deterministic_coverage"] == 1.0
-    assert metrics["fallback_count"] == 0
+    assert metrics["sample_count"] == 12
+    assert metrics["accuracy"] == 10 / 12
+    assert metrics["deterministic_coverage"] == 10 / 12
+    assert metrics["fallback_count"] == 2
+    assert metrics["failure_count"] == 2
+
+    with pytest.raises(ValueError, match="Duplicate routing case"):
+        load_evaluator().evaluate([*cases, cases[0]])

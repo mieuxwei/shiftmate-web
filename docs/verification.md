@@ -673,3 +673,47 @@ M4 acceptance passed: unconfirmed items never enter `shifts`, invalid/ambiguous
 times fail closed, repeated commit is idempotent, Gemini failure states are safe
 and retryable by re-upload, and temporary/raw content is not logged. M4 is
 complete and was approved for commit/push.
+
+## 2026-09-03 — M10 AI evaluation and reliability milestone gate
+
+- Added `python evals/run.py` as the single offline report builder and
+  `python evals/run.py --check` as the freshness gate. CI now rejects stale
+  versioned OCR, RAG, routing, or summary reports.
+- OCR evaluated 9 synthetic cases / 9 expected items: date exact match 0.889,
+  time exact match 0.778, missing-shift rate 0.111, extra-shift rate 0,
+  schema-valid rate 1.0, and review-flag recall 0.8. The report identifies the
+  skewed-time, multiple-date missing item, and illegible review-flag failures.
+- RAG evaluated 5 synthetic cases: Recall@k 0.9, citation correctness 1.0,
+  groundedness 0.8, refusal accuracy 0.8, 73 ms fixture-average latency, and 9
+  fixture Gemini calls. The conflicting-section retrieval/refusal failure is
+  visible with limitations on synthetic chunks, human labels, and fixture
+  latency.
+- Routing evaluated 12 synthetic questions: accuracy and deterministic coverage
+  0.833, with two terse queries correctly exposed as fallback boundaries in the
+  confusion map and case-level failures.
+- Failure injection verified Gemini extraction failure persists only a bounded
+  retryable code with no candidates, unavailable Supabase JWKS fails closed,
+  and Calendar unavailability increments retry state without changing confirmed
+  shift identity or timestamps. The focused evaluation/failure gate passed 6/6.
+- `ruff format --check .` passed for 135 files; Ruff lint and strict mypy passed
+  for 69 backend source files. The offline report freshness gate passed.
+- `pytest --cov=backend.app --cov-report=term-missing` passed 90 tests with 18
+  integration tests skipped and 77% aggregate application coverage. The
+  disposable PostgreSQL 17 + pgvector gate separately passed all 18 integration
+  tests.
+- Frontend Prettier, ESLint, strict TypeScript, 37/37 Vitest tests across 11
+  files, and the production build passed (76 modules; 444.83 kB JavaScript /
+  126.00 kB gzip). The repository `node_modules` file-provider state stalled
+  jsdom, so the final gate used identical source/lockfile with a fresh pnpm-store
+  materialization in a local temporary copy.
+- `docker build -t shiftmate-web:m10 .` passed. The non-root production image
+  served the SPA and returned
+  `{"status":"ok","environment":"production"}` from `/api/v1/health`.
+  Temporary database and smoke containers were removed.
+- Only versioned synthetic fixtures were used. No private data, credential,
+  live model/API call, paid platform, or cloud resource was used.
+
+M10 acceptance passed: every report is rebuildable from versioned fixtures;
+metrics, sample counts, limitations, and failures are visible; baselines include
+representative misses; and evaluation remains offline and free. M10 is complete
+and awaits explicit commit/push approval.

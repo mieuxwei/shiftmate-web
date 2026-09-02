@@ -4,8 +4,8 @@ Last updated: 2026-09-03
 
 ## Current position
 
-- Last completed milestone: **M9 — Security, scheduling and cost controls**
-- Active milestone: **None; M10 not started**
+- Last completed milestone: **M10 — AI evaluation and reliability**
+- Active milestone: **None; M10 complete, awaiting commit/push approval**
 - Blockers: none
 
 ## Completed
@@ -28,6 +28,20 @@ Last updated: 2026-09-03
   proxy workflow; pnpm dependencies use isolated named volumes.
 
 ## Latest milestone
+
+- M10 is complete: `python evals/run.py` rebuilds four versioned reports from
+  synthetic fixtures, while `--check` makes stale reports fail locally and in
+  CI. The runner makes no network, database, credential, or model call.
+- OCR reports 9 cases with 3 visible failures; RAG reports 5 cases with 1
+  visible failure; routing reports 12 cases with 2 conservative fallback
+  boundaries. Every report includes sample counts, metrics, case-level failure
+  reasons, and explicit limitations rather than only successful examples.
+- Deterministic tests inject Gemini import failure, unavailable Supabase JWKS,
+  and unavailable Google Calendar. They prove bounded retryable state, fail-
+  closed authentication, and preservation of confirmed shift truth.
+- The complete backend, PostgreSQL integration, frontend, report-freshness,
+  Docker build, production health, and SPA smoke gates passed without private
+  data, a live model, a paid platform, or a cloud resource.
 
 - M9 is complete: the API has bounded process-local rate limiting for the
   max-one-instance deployment, durable per-owner upload quotas, and an
@@ -120,8 +134,9 @@ Last updated: 2026-09-03
 
 ## Next task packet
 
-Begin M10 with reproducible OCR, RAG, routing, and failure-mode reports. Keep
-evaluation offline and synthetic; do not depend on a paid platform.
+After explicit M10 commit/push approval, begin M11 Cloud Run CI/CD deployment.
+M11 requires deployment choices, credentials, and checks that remain inside the
+NT$0 cost envelope; stop before any potentially paid resource or configuration.
 
 ## Known risks
 
