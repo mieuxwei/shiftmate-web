@@ -1,0 +1,37 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+coverage.xml
+.coverage
+htmlcov/
+
+# Node and frontend builds
+node_modules/
+frontend/node_modules/
+frontend/dist/
+coverage/
+
+# Local tools and editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Runtime and temporary files
+*.log
+tmp/
+.tmp/
