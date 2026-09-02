@@ -18,6 +18,8 @@ RUN addgroup --system app && adduser --system --ingroup app app
 COPY pyproject.toml ./
 COPY backend/ ./backend/
 RUN pip install --no-cache-dir .
+COPY alembic.ini ./
+COPY migrations/ ./migrations/
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 USER app
 EXPOSE 8080

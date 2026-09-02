@@ -10,9 +10,10 @@ not contain or depend on the earlier `line-bot-calendar` project.
 
 ## Current status
 
-Milestone M1 is complete. The React, FastAPI, single-container Docker, Compose,
-and validation foundation has passed its local gate. M2 (PostgreSQL, Auth, and
-RLS) is next but has not started. See
+Milestone M1 is complete. M2 (PostgreSQL, Auth, and RLS) is in progress. Its
+complete local schema, pgvector migration, and owner-isolation foundation now
+pass against disposable PostgreSQL 17. Asymmetric JWT validation and
+transaction-scoped database identity are also locally verified. See
 [`docs/project-state.md`](docs/project-state.md) for the concise handoff and
 [`projectplan.md`](projectplan.md) for the complete execution specification.
 
@@ -90,6 +91,15 @@ pnpm --dir frontend typecheck
 pnpm --dir frontend test
 pnpm --dir frontend build
 docker build -t shiftmate-web:m1 .
+```
+
+For the disposable M2 PostgreSQL integration checks:
+
+```bash
+docker compose --profile m2 up -d db
+export M2_TEST_DATABASE_URL="postgresql+psycopg://postgres:shiftmate_local_only@localhost:5432/shiftmate_test"
+pytest -m integration
+docker compose --profile m2 down
 ```
 
 Configuration names are documented in `.env.example`; never commit `.env` or

@@ -4,9 +4,8 @@ Last updated: 2026-09-02
 
 ## Current position
 
-- Last completed milestone: **M1 — Full-stack and Docker foundation**
-- Next milestone: **M2 — PostgreSQL, Auth and RLS**
-- Active milestone: none
+- Last completed milestone: **M2 — PostgreSQL, Auth and RLS**
+- Active milestone: none; **M3 — Schedule domain and Dashboard** is next
 - Blockers: none
 
 ## Completed
@@ -28,12 +27,28 @@ Last updated: 2026-09-02
 - Verified both the production-like Compose service and the dev Vite-to-FastAPI
   proxy workflow; pnpm dependencies use isolated named volumes.
 
+## Latest milestone
+
+- M2 slice 1 is complete: Alembic can rebuild `profiles` and `shifts`; PostgreSQL
+  integration tests cover downgrade/upgrade, constraints, the owner/date index,
+  and two-user RLS isolation.
+- M2 slice 2 is complete: the remaining planned tables, pgvector, composite
+  owner foreign keys, indexes, constraints, and forced RLS policies rebuild from
+  an empty PostgreSQL database.
+- M2 slice 3 is complete: asymmetric JWKS JWT validation, request-local database
+  role/identity handling, a shift repository interface, bounded pooling, and the
+  service-role/pooling ADR have local tests.
+- Live Supabase Free compatibility is complete: the Tokyo project is healthy,
+  its ES256 JWKS is compatible, both Alembic revisions applied, all 13
+  application tables and pgvector were verified, a rolled-back two-user
+  transaction passed owner isolation, and the application connection path
+  passed through the transaction pooler with clean role/subject reset.
+
 ## Next task packet
 
-Use `docs/codex-task-template.md` to define one M2 vertical slice. Start with the
-smallest locally verifiable database/migration boundary and owner-isolation test
-foundation. Do not provision Supabase or any potentially paid resource without
-checking current free-tier terms and obtaining approval when required.
+Start the smallest M3 vertical slice: deterministic schedule-domain calculations
+for cross-midnight shifts, breaks, timezone handling, and effective-dated pay
+rates, with targeted unit tests. Keep Gemini and UI work out of that first slice.
 
 ## Known risks
 
@@ -41,3 +56,6 @@ checking current free-tier terms and obtaining approval when required.
   again before provisioning in later milestones.
 - Docker Desktop's CLI directory was not automatically present in this shell's
   PATH; the README documents the macOS PATH fallback.
+- The Supabase project now contains the M2 schema. Future migration changes must
+  preserve compatibility between Alembic's direct migration path and the
+  transaction-pooled runtime path.
