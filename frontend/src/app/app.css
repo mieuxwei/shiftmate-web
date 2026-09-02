@@ -609,7 +609,9 @@ h1 {
 }
 
 .editor-form input,
-.editor-form textarea {
+.editor-form textarea,
+.import-item input,
+.import-upload input {
   width: 100%;
   padding: 0.7rem 0.8rem;
   border: 1px solid rgb(27 43 36 / 18%);
@@ -617,6 +619,85 @@ h1 {
   background: #fff;
   color: #1b2b24;
   font: inherit;
+}
+
+.import-upload,
+.import-review,
+.import-item {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.import-upload {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.import-review {
+  margin-top: 1.25rem;
+}
+
+.import-source {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  color: #627169;
+  font-size: 0.78rem;
+}
+
+.import-source img,
+.import-source object {
+  width: 100%;
+  max-height: 28rem;
+  border: 1px solid rgb(27 43 36 / 12%);
+  border-radius: 0.75rem;
+  background: #fff;
+  object-fit: contain;
+}
+
+.import-source object {
+  height: 28rem;
+}
+
+.import-review__summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #627169;
+  font-size: 0.78rem;
+}
+
+.import-item {
+  padding: 1rem;
+  border: 1px solid rgb(27 43 36 / 12%);
+  border-radius: 0.9rem;
+  background: #eef1eb;
+}
+
+.import-item label {
+  display: grid;
+  gap: 0.35rem;
+  color: #425249;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.import-item .check-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.import-item .check-label input {
+  width: auto;
+}
+
+.import-warnings,
+.import-message {
+  margin: 0;
+  color: #a43d31;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .editor-form textarea {

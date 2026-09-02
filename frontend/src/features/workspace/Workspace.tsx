@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ApiClient } from '../../api/client'
 import type { AnalyticsSummary, DateRange, Shift } from '../../api/types'
 import { Dashboard } from '../dashboard/Dashboard'
+import { ImportManager, type ImportClient } from '../imports/ImportManager'
 import { PayRateManager } from '../payRates/PayRateManager'
 import {
   moveAnchor,
@@ -25,7 +26,13 @@ export type WorkspaceClient = Pick<
   | 'createPayRate'
   | 'updatePayRate'
   | 'deletePayRate'
->
+> &
+  Partial<
+    Pick<
+      ApiClient,
+      'createImport' | 'getImport' | 'updateImportItem' | 'commitImport'
+    >
+  >
 
 type WorkspaceProps = {
   client: WorkspaceClient
@@ -147,6 +154,13 @@ function RangeData({
   return (
     <>
       <Dashboard summary={data.summary} />
+      {!readOnly && hasImportClient(client) && (
+        <ImportManager
+          client={client}
+          onCommitted={onChanged}
+          timezone={data.summary.timezone}
+        />
+      )}
       <ScheduleView
         mode={mode}
         range={range}
@@ -163,5 +177,13 @@ function RangeData({
         />
       )}
     </>
+  )
+}
+
+function hasImportClient(
+  client: WorkspaceClient,
+): client is WorkspaceClient & ImportClient {
+  return Boolean(
+    client.createImport && client.updateImportItem && client.commitImport,
   )
 }

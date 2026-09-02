@@ -409,3 +409,39 @@ M3 acceptance passed: manual CRUD is owner-isolated, timezone/break/cross-day/
 effective-rate tests pass, dashboard facts match the deterministic service, and
 the complete milestone works without Gemini. No paid resource or external model
 was used. M3 is complete and approved for commit/push.
+
+## 2026-09-02 — M4 Gemini schedule import ETL milestone gate
+
+- Added strict upload validation for extension, MIME, magic bytes, the 5 MB
+  limit, valid PDFs, and the 40-page PDF limit. Tests verify generated server
+  filenames, SHA-256 metadata, cleanup on success and every rejection path.
+- Added the `gemini-2.5-flash` REST adapter, `schedule_extraction_v1` prompt, and
+  strict structured schema. Adapter tests inspect the JSON response schema and
+  safe quota mapping; no live key or model call was used.
+- Added the owner-isolated persistent import workflow. Draft state is committed
+  before the external call; candidates are normalized in the profile timezone,
+  missing/invalid/DST-ambiguous times cannot be confirmed, and only explicitly
+  confirmed valid candidates become `source='import'` shifts.
+- Alembic `20260902_0003` adds deterministic item ordering and a unique committed
+  shift link. PostgreSQL integration tests cover clean downgrade/upgrade, RLS,
+  unconfirmed and invalid rows, and repeated idempotent commit: 14/14 passed.
+- Added authenticated multipart API methods and responsive React source preview,
+  item editor, warning/confirmation controls, commit state, and bounded
+  quota/unavailable messages. Frontend format, lint, strict typecheck, 29/29
+  tests, and production build passed (73 modules; 434.27 kB JS / 123.12 kB gzip).
+- Python format, Ruff, and strict mypy passed for 38 source files. All 60 backend
+  tests passed together against disposable PostgreSQL with 94% aggregate
+  application coverage.
+- The nine-family offline OCR fixture gate reported 1.0 for date exact match,
+  time exact match, schema-valid rate, and `needs_review` recall, with 0.0
+  missing and extra shift rates.
+- `docker build -t shiftmate-web:m4 .` passed. The non-root production container
+  served the SPA, production health response, and all four import OpenAPI paths.
+- Secret-pattern and application logging inspections found no credential,
+  original upload, or raw model-content logging. Only synthetic fixtures were
+  used; no paid resource was created or called.
+
+M4 acceptance passed: unconfirmed items never enter `shifts`, invalid/ambiguous
+times fail closed, repeated commit is idempotent, Gemini failure states are safe
+and retryable by re-upload, and temporary/raw content is not logged. M4 is
+complete and was approved for commit/push.

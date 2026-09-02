@@ -10,9 +10,11 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import Engine, create_engine
 
+from backend.app.api.v1.imports import get_schedule_extractor
 from backend.app.core.auth import AuthenticatedUser, get_current_user
 from backend.app.core.database import get_database_engine
 from backend.app.main import app
+from backend.app.schemas.imports import ExtractedShift, ScheduleExtraction
 
 pytestmark = [pytest.mark.integration, pytest.mark.anyio]
 
@@ -57,7 +59,8 @@ def api_database(
         admin.execute("GRANT USAGE ON SCHEMA public, app_private TO authenticated")
         admin.execute(
             "GRANT SELECT, INSERT, UPDATE, DELETE "
-            "ON profiles, shifts, pay_rates TO authenticated"
+            "ON profiles, shifts, pay_rates, shift_imports, shift_import_items "
+            "TO authenticated"
         )
         admin.execute(
             """
@@ -145,6 +148,74 @@ async def test_shift_create_and_list_are_owner_isolated(
             "SELECT owner_id FROM shifts WHERE id = %s", (created.json()["id"],)
         ).fetchone()
     assert stored_owner == (owner.id,)
+
+
+class SyntheticExtractor:
+    model_name = "synthetic-gemini"
+    prompt_version = "schedule_extraction_v1"
+
+    def extract(
+        self, path: object, media_type: str, timezone: str
+    ) -> ScheduleExtraction:
+        return ScheduleExtraction(
+            items=[
+                ExtractedShift(
+                    work_date="2026-09-05",
+                    start_time="09:00",
+                    end_time="17:00",
+                    break_minutes=30,
+                    shift_type="day",
+                ),
+                ExtractedShift(
+                    work_date="2026-09-06",
+                    start_time=None,
+                    end_time="17:00",
+                    needs_review=True,
+                ),
+            ]
+        )
+
+
+async def test_import_review_commit_is_owner_scoped_and_idempotent(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    app.dependency_overrides[get_schedule_extractor] = lambda: SyntheticExtractor()
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        created = await client.post(
+            "/api/v1/imports",
+            files={"file": ("synthetic.png", b"\x89PNG\r\n\x1a\nfixture", "image/png")},
+        )
+        import_id = created.json()["id"]
+        valid_item, invalid_item = created.json()["items"]
+        unconfirmed_commit = await client.post(f"/api/v1/imports/{import_id}/commit")
+        invalid_confirmation = await client.patch(
+            f"/api/v1/imports/{import_id}/items/{invalid_item['id']}",
+            json={"confirmed": True},
+        )
+        confirmed = await client.patch(
+            f"/api/v1/imports/{import_id}/items/{valid_item['id']}",
+            json={"confirmed": True},
+        )
+        first_commit = await client.post(f"/api/v1/imports/{import_id}/commit")
+        repeated_commit = await client.post(f"/api/v1/imports/{import_id}/commit")
+        shifts = await client.get(
+            "/api/v1/shifts",
+            params={"date_from": "2026-09-05", "date_to": "2026-09-05"},
+        )
+
+    assert created.status_code == 201
+    assert created.json()["filename"] != "synthetic.png"
+    assert created.json()["status"] == "review"
+    assert unconfirmed_commit.status_code == 409
+    assert invalid_confirmation.status_code == 409
+    assert confirmed.status_code == 200
+    assert confirmed.json()["items"][0]["confirmed"] is True
+    assert first_commit.status_code == 200
+    assert repeated_commit.json() == first_commit.json()
+    assert len(first_commit.json()["created_shift_ids"]) == 1
+    assert len(shifts.json()) == 1
+    assert shifts.json()[0]["source"] == "import"
 
 
 async def test_shift_api_rejects_invalid_ranges_and_timestamps(

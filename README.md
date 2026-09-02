@@ -10,10 +10,12 @@ not contain or depend on the earlier `line-bot-calendar` project.
 
 ## Current status
 
-Milestones M1–M3 are complete. The application now includes the PostgreSQL/RLS
+Milestones M1–M4 are complete. The application now includes the PostgreSQL/RLS
 foundation, authenticated shift and effective-dated pay-rate CRUD, deterministic
 hours/pay analytics, month/week schedules, dashboard charts, and a credential-free
-synthetic read-only demo. M4 (Gemini schedule import ETL) is next. See
+synthetic read-only demo, plus a secure Gemini-assisted schedule import flow
+with edit/review/explicit confirmation and idempotent commit. M5 (grounded policy
+RAG and citations) is next. See
 [`docs/project-state.md`](docs/project-state.md) for the concise handoff and
 [`projectplan.md`](projectplan.md) for the complete execution specification.
 
@@ -69,6 +71,13 @@ Open `http://localhost:5173`. The Vite server proxies `/api` to FastAPI on port
 select **查看合成資料示範** on the landing page. To use authenticated CRUD,
 configure the public `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` values;
 never expose a service-role key to Vite.
+
+Schedule import accepts JPG, PNG, and PDF files up to 5 MB (PDFs up to 40 pages).
+It is disabled with the safe `GEMINI_NOT_CONFIGURED` response until
+`GEMINI_API_KEY` is set in a local secret store; the default model is
+`gemini-2.5-flash`. Upload only synthetic or anonymized schedules. The browser
+keeps the source preview locally, the server regenerates its stored filename,
+and request-scoped temporary files are deleted after extraction.
 
 For the single-container production-like workflow, run:
 

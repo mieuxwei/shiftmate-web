@@ -17,7 +17,7 @@
 1. MUST 建立全新 repository；不得修改、搬移、匯入或依賴原 `line-bot-calendar` 專案。
 2. MUST 一次只執行一個 active milestone；不得同時展開多個大型 milestone。
 3. MUST 在編碼前檢查目前狀態、相關檔案與既有測試，不得假設 repository 狀態。
-4. MUST 優先完成最小且可驗證的 vertical slice，再擴充功能。
+4. MUST 以最小且可驗證的 vertical slice 作為 milestone 內部檢查點，再擴充下一片；slice 完成不得視為停止或 handoff 條件。
 5. MUST 使用既有穩定函式庫與清楚的 application boundary，不為展示而自行重造框架。
 6. MUST 在 milestone 完成前執行該 milestone 的驗收命令並記錄結果。
 7. MUST 保護使用者既有檔案與未提交變更；不得執行 destructive Git 操作。
@@ -25,8 +25,9 @@
 9. MUST 使用合成或匿名資料；Gemini Free Tier 不得處理真實私人班表、薪資或公司內部文件。
 10. MUST 以預期雲端費用 NT$0 為目標；任何可能導致付費的變更都需要先停下並取得使用者批准。
 11. MUST 在功能與計畫發生偏差時先更新本文件或 ADR，再繼續實作。
-12. MUST 以簡短 handoff 結束每次 Codex 工作：變更檔案、驗證結果、未解風險、下一個 milestone。
+12. MUST 僅在需要使用者決策／批准／憑證／外部操作等無法安全推定的輸入，或完整 milestone gate 通過時停止並 handoff；單一 task packet、slice 或 targeted test 完成後 MUST 在同一次執行中直接繼續該 milestone。測試失敗時，只要仍有範圍內的修復或診斷路徑，也不得因此停止。
 13. MUST 在 milestone gate 通過後等待使用者明確批准該 milestone 的 commit/push；一旦批准，Codex 應自行提交所有已驗證變更並推送目前 branch 至既有 upstream，不需再次詢問。不得 rewrite remote history；push 失敗時只能使用安全、非破壞性的修復方式。
+14. MUST 在允許停止時提供簡短 handoff：變更檔案、驗證結果、未解風險，以及需要的確切決策或下一個 milestone。
 
 ### 0.3 Codex 使用量治理
 
@@ -81,7 +82,7 @@ Codex 開始工作時 SHOULD 先讀上述狀態檔與相關程式，而不是重
 
 ### 0.4 Codex task packet
 
-後續每次實作請使用下列格式，降低重新理解成本：
+後續每個 milestone 及其內部 slice 請使用下列格式，降低重新理解成本。Task packet 是內部執行檢查點，不是停止邊界；完成後應建立下一個同 milestone packet 並持續執行，直到符合第 12 條停止條件：
 
 ```text
 Milestone: Mx
@@ -770,8 +771,8 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M0 | Repository boundary and Codex context | — | COMPLETE |
 | M1 | Full-stack and Docker foundation | M0 | COMPLETE |
 | M2 | PostgreSQL, Auth and RLS | M1 | COMPLETE |
-| M3 | Schedule domain and Dashboard | M2 | COMPLETED |
-| M4 | Gemini schedule import ETL | M3 | NOT_STARTED |
+| M3 | Schedule domain and Dashboard | M2 | COMPLETE |
+| M4 | Gemini schedule import ETL | M3 | COMPLETE |
 | M5 | LangChain RAG and citations | M2 | NOT_STARTED |
 | M6 | LangGraph hybrid assistant | M3, M5 | NOT_STARTED |
 | M7 | Google Calendar and ICS | M3 | NOT_STARTED |
@@ -914,6 +915,14 @@ Routine。優先 targeted unit/component tests。
 - Review/edit/commit UI。
 - Idempotent commit。
 - OCR eval fixtures。
+
+#### Current progress (2026-09-02)
+
+- Upload validation, Gemini structured extraction, persistent review state,
+  explicit per-item confirmation, idempotent commit, review UI, and the offline
+  OCR evaluation gate are implemented.
+- The complete M4 acceptance gate passed on 2026-09-02. No live Gemini call,
+  paid service, private schedule, or secret was used during verification.
 
 #### Acceptance gate
 

@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from contextlib import contextmanager
 from functools import lru_cache
 from typing import Annotated
 
@@ -40,6 +41,14 @@ def get_database_engine(
 def user_connection(
     user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     engine: Annotated[Engine, Depends(get_database_engine)],
+) -> Iterator[Connection]:
+    with authenticated_connection(engine, user) as connection:
+        yield connection
+
+
+@contextmanager
+def authenticated_connection(
+    engine: Engine, user: AuthenticatedUser
 ) -> Iterator[Connection]:
     with engine.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE authenticated")

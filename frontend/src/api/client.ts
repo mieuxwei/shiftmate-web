@@ -1,12 +1,15 @@
 import type {
   AnalyticsSummary,
   DateRange,
+  ImportCommit,
+  ImportItemUpdate,
   PayRate,
   PayRateCreate,
   PayRateUpdate,
   Shift,
   ShiftCreate,
   ShiftUpdate,
+  ShiftImport,
 } from './types'
 
 export type AccessTokenProvider = () => string | null
@@ -94,6 +97,34 @@ export class ApiClient {
     return this.request(`/api/v1/analytics/summary?${dateRangeQuery(range)}`, {
       signal,
     })
+  }
+
+  createImport(file: File): Promise<ShiftImport> {
+    const body = new FormData()
+    body.set('file', file)
+    return this.request('/api/v1/imports', { method: 'POST', body })
+  }
+
+  getImport(importId: string): Promise<ShiftImport> {
+    return this.request(`/api/v1/imports/${encodeURIComponent(importId)}`, {})
+  }
+
+  updateImportItem(
+    importId: string,
+    itemId: string,
+    payload: ImportItemUpdate,
+  ): Promise<ShiftImport> {
+    return this.request(
+      `/api/v1/imports/${encodeURIComponent(importId)}/items/${encodeURIComponent(itemId)}`,
+      this.jsonRequest('PATCH', payload),
+    )
+  }
+
+  commitImport(importId: string): Promise<ImportCommit> {
+    return this.request(
+      `/api/v1/imports/${encodeURIComponent(importId)}/commit`,
+      { method: 'POST' },
+    )
   }
 
   private jsonRequest(method: 'POST' | 'PATCH', payload: object): RequestInit {

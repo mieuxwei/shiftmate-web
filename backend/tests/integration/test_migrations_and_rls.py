@@ -172,6 +172,15 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
                 """
             ).fetchall()
         }
+        import_item_constraints = {
+            row[0]
+            for row in connection.execute(
+                """
+                SELECT conname FROM pg_constraint
+                WHERE conrelid = 'shift_import_items'::regclass
+                """
+            ).fetchall()
+        }
 
     assert APPLICATION_TABLES | {"alembic_version"} <= tables
     assert index_definition is not None
@@ -203,6 +212,11 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
         "uq_scheduled_job_runs_job_date",
     } <= job_constraints
     assert "chain_of_thought" not in chat_columns
+    assert {
+        "fk_shift_import_items_committed_shift",
+        "uq_shift_import_items_import_index",
+        "uq_shift_import_items_committed_shift",
+    } <= import_item_constraints
 
     downgrade("base")
     with psycopg.connect(psycopg_url(database_url)) as connection:
@@ -259,8 +273,8 @@ def test_rls_prevents_cross_owner_reads_and_writes(database_url: str) -> None:
         with pytest.raises(psycopg.errors.ForeignKeyViolation):
             admin.execute(
                 """
-                INSERT INTO shift_import_items (import_id, owner_id)
-                VALUES (%s, %s)
+                INSERT INTO shift_import_items (import_id, owner_id, item_index)
+                VALUES (%s, %s, 0)
                 """,
                 (import_a, user_b),
             )

@@ -1,0 +1,11 @@
+[
+  {"id":"clear","tags":["clear-image"],"expected":[{"work_date":"2026-09-01","start_time":"09:00","end_time":"17:00","needs_review":false}]},
+  {"id":"shadow","tags":["shadow"],"expected":[{"work_date":"2026-09-02","start_time":"10:00","end_time":"18:00","needs_review":true}]},
+  {"id":"skewed","tags":["skew"],"expected":[{"work_date":"2026-09-03","start_time":"08:30","end_time":"16:30","needs_review":true}]},
+  {"id":"overnight","tags":["overnight"],"expected":[{"work_date":"2026-09-04","start_time":"22:00","end_time":"06:00","needs_review":false}]},
+  {"id":"blank-rest","tags":["blank","rest-day"],"expected":[]},
+  {"id":"multiple-people","tags":["multiple-people"],"expected":[{"work_date":"2026-09-05","start_time":"09:00","end_time":"17:00","needs_review":true}]},
+  {"id":"multiple-dates","tags":["multiple-dates"],"expected":[{"work_date":"2026-09-06","start_time":"09:00","end_time":"17:00","needs_review":false},{"work_date":"2026-09-07","start_time":"12:00","end_time":"20:00","needs_review":false}]},
+  {"id":"handwritten-mark","tags":["mark"],"expected":[{"work_date":"2026-09-08","start_time":"14:00","end_time":"22:00","needs_review":true}]},
+  {"id":"illegible","tags":["ambiguous","illegible"],"expected":[{"work_date":"2026-09-09","start_time":null,"end_time":null,"needs_review":true}]}
+]

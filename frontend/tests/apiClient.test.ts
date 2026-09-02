@@ -90,4 +90,26 @@ describe('ApiClient', () => {
       }),
     ).rejects.toEqual(new ApiError(422, 'Invalid date range'))
   })
+
+  it('uploads an import as authenticated multipart data', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ id: 'import-1' }), { status: 200 }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const client = new ApiClient(() => 'synthetic-token')
+
+    await client.createImport(
+      new File(['synthetic'], 'synthetic.png', { type: 'image/png' }),
+    )
+
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(path).toBe('/api/v1/imports')
+    expect(init.body).toBeInstanceOf(FormData)
+    expect(new Headers(init.headers).has('Content-Type')).toBe(false)
+    expect(new Headers(init.headers).get('Authorization')).toBe(
+      'Bearer synthetic-token',
+    )
+  })
 })
