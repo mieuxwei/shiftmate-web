@@ -172,3 +172,240 @@ Supabase Free plan, and no paid resource or add-on was enabled.
   transaction-local identity cleanup.
 - Rebuilt the final `shiftmate-web:m2` production image successfully. The
   disposable database container was stopped and automatically removed.
+
+## 2026-09-02 — M3 slice 1 deterministic schedule domain
+
+- Added a framework-independent schedule domain module; no API, database write,
+  UI, Gemini, credential, or external service is involved in the calculation.
+- Nine targeted tests passed for cross-midnight shifts, break deduction,
+  profile-timezone date conversion, spring/fall DST elapsed time, inclusive
+  effective-date boundaries, missing and overlapping rates, input validation,
+  and half-up cent rounding.
+- Full no-database backend regression gate passed in an isolated Python 3.12
+  container: all 35 files passed Ruff formatting, Ruff lint passed, strict mypy
+  passed, and 16 tests passed with 3 PostgreSQL tests skipped.
+- `backend.app` coverage was 87%; the new schedule domain module was 100%
+  covered.
+
+This is a verified M3 slice, not the M3 milestone gate. CRUD, schedule views,
+pay-rate management, aggregate analytics, dashboard UI, and synthetic demo data
+remain. No paid resource was created or used.
+
+## 2026-09-02 — M3 slice 2 schedule aggregation
+
+- Added deterministic schedule aggregation for shift count, total paid
+  duration/hours, estimated pay, sorted shift-type counts, and longest
+  consecutive-workday runs.
+- Multiple shifts on the same local work date count once toward consecutive
+  days; empty schedules return a zero summary without requiring a pay rate.
+- Twelve focused schedule-domain and analytics tests passed.
+- Full no-database backend regression gate passed in an isolated Python 3.12
+  container: all 37 files passed Ruff formatting, Ruff lint passed, strict mypy
+  passed, and 19 tests passed with 3 PostgreSQL tests skipped.
+- `backend.app` coverage was 89%; both schedule domain modules were 100%
+  covered.
+
+This is a verified M3 slice, not the M3 milestone gate. CRUD, schedule views,
+pay-rate management, dashboard UI, and synthetic demo data remain. No paid
+resource was created or used.
+
+## 2026-09-02 — M3 slice 3 owner-scoped shift list/create API
+
+- Added typed request/response schemas, application service operations, and
+  `GET`/`POST /api/v1/shifts` routes for manual shift listing and creation.
+- Shift creation derives `work_date` from the authenticated owner's profile
+  timezone, reuses the deterministic domain validation, fixes source to
+  `manual`, and neither accepts nor returns `owner_id`.
+- Repository SQL relies on request-local identity and forced RLS rather than an
+  application-supplied owner filter; optional date bounds were verified both
+  with and without query parameters.
+- PostgreSQL API integration tests created two synthetic owners and confirmed
+  only the authenticated owner's row was returned and the new row stored the
+  authenticated owner ID. Invalid date ranges and naive timestamps returned
+  HTTP 422.
+- Full Python 3.12 backend gate passed against a disposable local PostgreSQL 17
+  plus pgvector database: all 43 files passed Ruff formatting, Ruff lint and
+  strict mypy passed, and all 27 tests passed with 94% `backend.app` coverage.
+- The temporary database used tmpfs storage and was stopped and automatically
+  removed after verification.
+
+This is a verified M3 slice, not the M3 milestone gate. PATCH/DELETE, pay-rate
+management, schedule/dashboard UI, and synthetic demo data remain. No paid
+resource or external API was used.
+
+## 2026-09-02 — M3 slice 4 complete manual shift CRUD
+
+- Added owner-scoped `PATCH /api/v1/shifts/{shift_id}` and
+  `DELETE /api/v1/shifts/{shift_id}` operations across repository, service,
+  schemas, and API layers.
+- Partial updates merge with the current RLS-visible row and then re-run full
+  timestamp, break, timezone, and shift-type validation. Changing timestamps
+  recalculates the local `work_date`.
+- PATCH distinguishes an omitted note from `notes: null`, allowing notes to be
+  explicitly cleared while rejecting empty patches and null required fields.
+- PostgreSQL integration tests confirmed another owner's UUID cannot be updated
+  or deleted and returns the same HTTP 404 as a missing row. Successful delete
+  returns HTTP 204 with an empty body and repeated deletion returns 404.
+- Full Python 3.12 backend gate passed against a disposable local PostgreSQL 17
+  plus pgvector database: all 43 files passed Ruff formatting, Ruff lint and
+  strict mypy passed, and all 31 tests passed with 95% `backend.app` coverage.
+- The repository and schema modules were fully covered; service and shift API
+  coverage were 97% and 98%. The tmpfs database was stopped and automatically
+  removed after verification.
+
+This is a verified M3 slice, not the M3 milestone gate. Pay-rate management,
+schedule/dashboard UI, and synthetic demo data remain. No paid resource or
+external API was used.
+
+## 2026-09-02 — M3 slice 5 owner-scoped pay-rate list/create API
+
+- Added typed repository, service, schema, and API layers for
+  `GET /api/v1/pay-rates` and `POST /api/v1/pay-rates`.
+- Effective periods are inclusive at both ends. Adjacent periods beginning the
+  day after an existing end are accepted; shared boundary dates and all other
+  overlaps return HTTP 409.
+- Creation validates positive two-decimal rates and date ordering through
+  Pydantic and the deterministic pay-rate domain object.
+- Same-owner create operations take a transaction-scoped advisory lock before
+  checking overlap, preventing concurrent application requests from both
+  passing an empty overlap check. Owner identity comes only from request-local
+  database state and is never accepted or returned by the API.
+- PostgreSQL integration tests seeded another owner with an open-ended rate and
+  confirmed it was invisible and did not affect the authenticated owner's list
+  or overlap decision.
+- Full Python 3.12 backend gate passed against a disposable local PostgreSQL 17
+  plus pgvector database: all 48 files passed Ruff formatting, Ruff lint and
+  strict mypy passed, and all 36 tests passed with 95% `backend.app` coverage.
+  The new pay-rate repository, service, and schemas were fully covered.
+- The tmpfs database was stopped and automatically removed after verification.
+
+This is a verified M3 slice, not the M3 milestone gate. Pay-rate PATCH/DELETE,
+schedule/dashboard UI, and synthetic demo data remain. No paid resource or
+external API was used.
+
+## 2026-09-02 — M3 slice 6 complete pay-rate management
+
+- Added owner-scoped `PATCH /api/v1/pay-rates/{pay_rate_id}` and
+  `DELETE /api/v1/pay-rates/{pay_rate_id}` across repository, service, schema,
+  and API layers.
+- Partial updates serialize on the same owner-specific transaction advisory
+  lock as creates, exclude the edited record from overlap checks, and re-run
+  deterministic rate/date validation.
+- Repricing an existing period is allowed. Shrinking or moving a period is
+  rejected with HTTP 409 when it would exclude a shift currently covered by
+  that rate; deleting any rate that covers an existing shift is also rejected.
+- PostgreSQL integration tests confirmed overlap rejection, successful
+  repricing, in-use protection, empty/null PATCH validation, HTTP 204 delete,
+  repeat-delete 404, and identical 404 behavior for another owner's rate.
+- Full Python 3.12 backend gate passed against a disposable local PostgreSQL 17
+  plus pgvector database: all 48 files passed Ruff formatting, Ruff lint and
+  strict mypy passed, and all 40 tests passed with 95% `backend.app` coverage.
+  Both repositories and both PATCH schemas were fully covered.
+- The tmpfs database was stopped and automatically removed after verification.
+
+This is a verified M3 slice, not the M3 milestone gate. The analytics API,
+schedule/dashboard UI, and synthetic demo data remain. No paid resource or
+external API was used.
+
+## 2026-09-02 — M3 slice 7 owner-scoped analytics summary API
+
+- Added `GET /api/v1/analytics/summary` with required inclusive `date_from` and
+  `date_to` parameters and a maximum inclusive range of 366 days.
+- Added a profile preferences repository for owner-visible timezone and
+  currency. The analytics service loads RLS-filtered shifts and pay rates, then
+  delegates all hours, pay, shift-type, and consecutive-day calculations to the
+  existing deterministic domain function.
+- The service rejects stored `work_date` values that do not match the shift
+  start in the profile timezone. Missing/overlapping rates and inconsistent
+  stored schedule data return HTTP 409 rather than partial or invented totals.
+- PostgreSQL integration tests created two shifts at TWD 200/hour and confirmed
+  the API returned exactly 14.5 paid hours, TWD 2900.00, two shift types, and a
+  two-day run. Another owner's shift and open-ended rate were excluded by RLS.
+- Invalid/reversed ranges returned HTTP 422 and a shift without a covering rate
+  returned HTTP 409.
+- Full Python 3.12 backend gate passed against a disposable local PostgreSQL 17
+  plus pgvector database: all 53 files passed Ruff formatting, Ruff lint and
+  strict mypy passed, and all 45 tests passed with 96% `backend.app` coverage.
+  The analytics service and response schema were fully covered.
+- The tmpfs database was stopped and automatically removed after verification.
+
+This is a verified M3 slice, not the M3 milestone gate. Authenticated frontend
+session/client work, schedule/dashboard UI, and synthetic demo data remain. No
+paid resource or external API was used.
+
+## 2026-09-02 — M3 slice 8 authenticated frontend session and API client
+
+- Added the official Supabase JavaScript client behind a small injectable
+  session gateway. Initial session lookup and auth-state subscription expose
+  explicit unconfigured, loading, signed-out, and signed-in UI states without
+  copying tokens into logs or project files.
+- Added email/password sign-in and sign-out controls. Browser configuration uses
+  only `VITE_SUPABASE_URL` and the public `VITE_SUPABASE_ANON_KEY`; the example
+  environment file explicitly prohibits a service-role key in browser values.
+- Added a typed API client for shift CRUD, pay-rate CRUD, and analytics summary.
+  Every user-data request reads the current access token, attaches it as a bearer
+  token, and fails locally when no authenticated session is available.
+- Added component tests with a synthetic fake session and API-client tests for
+  bearer headers, date filters, typed analytics responses, missing-session
+  rejection, and API error details. No live account or user data was used.
+- Frontend lint and strict TypeScript checks passed. Both test files passed with
+  all 8 tests, and the production bundle built successfully (62 modules,
+  404.77 kB JavaScript / 115.70 kB gzip).
+- Docker Desktop could not consistently read macOS compressed/file-provider
+  metadata on the repository's `index.html`. The identical tracked frontend
+  contents and lockfile were copied to a local temporary directory for the final
+  Prettier check and production build; both passed there. Lint, typecheck, and
+  tests passed directly against the working tree.
+
+This is a verified M3 slice, not the M3 milestone gate. Read-only schedule and
+dashboard presentation, mutation UI, and synthetic demo data remain. No paid
+resource or external API was used.
+
+## 2026-09-02 — M3 slices 9–12 schedule/dashboard vertical slice
+
+- Extended the deterministic analytics domain and API with profile timezone and
+  Monday-based weekly paid-hour totals. The React dashboard only visualizes
+  backend-returned hours and pay; it does not recalculate payroll.
+- Added responsive month/week schedule views, date navigation, summary metrics,
+  shift-type distribution, weekly-hour trend, consecutive-day display, loading,
+  empty, and safe error states.
+- Added authenticated shift create/update/two-step-delete controls. Local
+  date-time fields convert through the profile timezone, including DST gap
+  rejection, before sending UTC timestamps to the API.
+- Added independently loaded effective-dated pay-rate create/update/two-step-delete
+  controls so users can repair missing-rate analytics errors. Conflict and
+  protected-deletion failures do not expose internal database details.
+- Added `frontend/src/demo/m3-demo.json`, a credential-free read-only synthetic
+  dataset with six shifts and one rate. A Python test proves its 40 paid hours,
+  TWD 8,000.00 estimate, shift distribution, weekly trend, and two-day maximum
+  consecutive run match the production domain calculator.
+- Frontend component/unit coverage now includes API auth behavior, session UI,
+  range navigation, timezone/DST conversion, dashboard states, shift CRUD,
+  pay-rate CRUD, and the offline demo: 26 tests passed across 7 files.
+
+## 2026-09-02 — M3 milestone gate
+
+- `ruff format --check .`: 54 files already formatted.
+- `ruff check .`: passed.
+- `mypy`: strict checks passed for 29 source files.
+- `pytest --cov=backend.app --cov-report=term-missing`: all 46 unit/integration
+  tests passed against disposable PostgreSQL 17 + pgvector with 96% coverage;
+  both domain modules and the analytics service retained 100% coverage.
+- `pnpm --dir frontend format`, `lint`, `typecheck`, and `test`: passed; 26/26
+  tests passed.
+- `pnpm --dir frontend build`: passed; 72 modules, 427.40 kB JavaScript
+  (121.24 kB gzip), and 9.14 kB CSS (2.48 kB gzip).
+- `docker build -t shiftmate-web:m3 .`: passed from the identical clean local
+  copy. The non-root production container served the SPA and returned
+  `{"status":"ok","environment":"production"}` from `/api/v1/health`.
+- In-app browser QA passed on the production container: credential-free demo
+  launch, deterministic month summary, month-to-week transition (14.5 hours /
+  TWD 2,900.00 for 2026-08-31–2026-09-06), and responsive 390 px layout.
+- Docker Desktop's file-provider EIO required the clean temporary copy for
+  reliable format/build reads. Source behavior was also checked directly in the
+  working tree. The temporary app and tmpfs database containers were removed.
+
+M3 acceptance passed: manual CRUD is owner-isolated, timezone/break/cross-day/
+effective-rate tests pass, dashboard facts match the deterministic service, and
+the complete milestone works without Gemini. No paid resource or external model
+was used. M3 is complete and approved for commit/push.

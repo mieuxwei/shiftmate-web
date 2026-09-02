@@ -1,0 +1,456 @@
+import os
+from collections.abc import Iterator
+from datetime import UTC, datetime
+from uuid import UUID, uuid4
+
+import httpx
+import psycopg
+import pytest
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import Engine, create_engine
+
+from backend.app.core.auth import AuthenticatedUser, get_current_user
+from backend.app.core.database import get_database_engine
+from backend.app.main import app
+
+pytestmark = [pytest.mark.integration, pytest.mark.anyio]
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
+@pytest.fixture(scope="module")
+def database_url() -> Iterator[str]:
+    url = os.environ.get("M2_TEST_DATABASE_URL")
+    if not url:
+        pytest.skip("M2_TEST_DATABASE_URL is not set")
+
+    previous_url = os.environ.get("DATABASE_URL")
+    os.environ["DATABASE_URL"] = url
+    try:
+        command.upgrade(Config("alembic.ini"), "head")
+        yield url
+    finally:
+        if previous_url is None:
+            os.environ.pop("DATABASE_URL", None)
+        else:
+            os.environ["DATABASE_URL"] = previous_url
+
+
+def psycopg_url(database_url: str) -> str:
+    return database_url.replace("postgresql+psycopg://", "postgresql://", 1)
+
+
+@pytest.fixture
+def api_database(
+    database_url: str,
+) -> Iterator[tuple[Engine, AuthenticatedUser, UUID]]:
+    owner = AuthenticatedUser(id=uuid4(), role="authenticated")
+    other_owner = uuid4()
+    engine = create_engine(database_url, connect_args={"prepare_threshold": None})
+
+    with psycopg.connect(psycopg_url(database_url), autocommit=True) as admin:
+        admin.execute("CREATE ROLE authenticated NOLOGIN NOBYPASSRLS")
+        admin.execute("GRANT USAGE ON SCHEMA public, app_private TO authenticated")
+        admin.execute(
+            "GRANT SELECT, INSERT, UPDATE, DELETE "
+            "ON profiles, shifts, pay_rates TO authenticated"
+        )
+        admin.execute(
+            """
+            INSERT INTO profiles (id, display_name, timezone)
+            VALUES (%s, 'Synthetic API User', 'Asia/Taipei'),
+                   (%s, 'Synthetic Other User', 'Asia/Taipei')
+            """,
+            (owner.id, other_owner),
+        )
+        admin.execute(
+            """
+            INSERT INTO shifts (
+                owner_id, work_date, start_at, end_at, shift_type
+            )
+            VALUES (%s, '2026-09-03', %s, %s, 'other')
+            """,
+            (
+                other_owner,
+                datetime(2026, 9, 3, 1, tzinfo=UTC),
+                datetime(2026, 9, 3, 2, tzinfo=UTC),
+            ),
+        )
+        admin.execute(
+            """
+            INSERT INTO pay_rates (
+                id, owner_id, hourly_rate, effective_from, effective_to
+            )
+            VALUES (%s, %s, 999.00, '2026-01-01', NULL)
+            """,
+            (other_owner, other_owner),
+        )
+
+    app.dependency_overrides[get_current_user] = lambda: owner
+    app.dependency_overrides[get_database_engine] = lambda: engine
+    try:
+        yield engine, owner, other_owner
+    finally:
+        app.dependency_overrides.clear()
+        engine.dispose()
+        with psycopg.connect(psycopg_url(database_url), autocommit=True) as admin:
+            admin.execute(
+                "DELETE FROM profiles WHERE id IN (%s, %s)", (owner.id, other_owner)
+            )
+            admin.execute("DROP OWNED BY authenticated")
+            admin.execute("DROP ROLE authenticated")
+
+
+async def test_shift_create_and_list_are_owner_isolated(
+    database_url: str, api_database: tuple[Engine, AuthenticatedUser, UUID]
+) -> None:
+    _, owner, _ = api_database
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        created = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-02T16:30:00Z",
+                "end_at": "2026-09-02T18:30:00Z",
+                "break_minutes": 15,
+                "shift_type": "night",
+                "notes": "Synthetic API shift",
+            },
+        )
+        listed = await client.get(
+            "/api/v1/shifts",
+            params={"date_from": "2026-09-03", "date_to": "2026-09-03"},
+        )
+        listed_without_range = await client.get("/api/v1/shifts")
+        empty_range = await client.get(
+            "/api/v1/shifts",
+            params={"date_from": "2026-09-04", "date_to": "2026-09-04"},
+        )
+
+    assert created.status_code == 201
+    assert created.json()["work_date"] == "2026-09-03"
+    assert created.json()["source"] == "manual"
+    assert "owner_id" not in created.json()
+    assert listed.status_code == 200
+    assert [shift["id"] for shift in listed.json()] == [created.json()["id"]]
+    assert listed_without_range.json() == listed.json()
+    assert empty_range.json() == []
+
+    with psycopg.connect(psycopg_url(database_url)) as admin:
+        stored_owner = admin.execute(
+            "SELECT owner_id FROM shifts WHERE id = %s", (created.json()["id"],)
+        ).fetchone()
+    assert stored_owner == (owner.id,)
+
+
+async def test_shift_api_rejects_invalid_ranges_and_timestamps(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        reversed_range = await client.get(
+            "/api/v1/shifts",
+            params={"date_from": "2026-09-03", "date_to": "2026-09-02"},
+        )
+        naive_timestamp = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-03T09:00:00",
+                "end_at": "2026-09-03T10:00:00",
+                "shift_type": "day",
+            },
+        )
+
+    assert reversed_range.status_code == 422
+    assert naive_timestamp.status_code == 422
+
+
+async def test_shift_update_and_delete_are_owner_isolated(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    _, _, other_owner = api_database
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        created = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-02T16:30:00Z",
+                "end_at": "2026-09-02T18:30:00Z",
+                "break_minutes": 15,
+                "shift_type": "night",
+                "notes": "Clear this note",
+            },
+        )
+        shift_id = created.json()["id"]
+        updated = await client.patch(
+            f"/api/v1/shifts/{shift_id}",
+            json={
+                "start_at": "2026-09-03T16:30:00Z",
+                "end_at": "2026-09-03T19:00:00Z",
+                "notes": None,
+            },
+        )
+        hidden_update = await client.patch(
+            f"/api/v1/shifts/{other_owner}", json={"notes": "blocked"}
+        )
+        hidden_delete = await client.delete(f"/api/v1/shifts/{other_owner}")
+        deleted = await client.delete(f"/api/v1/shifts/{shift_id}")
+        deleted_again = await client.delete(f"/api/v1/shifts/{shift_id}")
+        listed = await client.get("/api/v1/shifts")
+
+    assert updated.status_code == 200
+    assert updated.json()["work_date"] == "2026-09-04"
+    assert updated.json()["break_minutes"] == 15
+    assert updated.json()["notes"] is None
+    assert hidden_update.status_code == 404
+    assert hidden_delete.status_code == 404
+    assert deleted.status_code == 204
+    assert deleted.content == b""
+    assert deleted_again.status_code == 404
+    assert listed.json() == []
+
+
+async def test_shift_patch_rejects_empty_null_and_invalid_merged_values(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        created = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-03T09:00:00Z",
+                "end_at": "2026-09-03T17:00:00Z",
+                "shift_type": "day",
+            },
+        )
+        shift_id = created.json()["id"]
+        empty_patch = await client.patch(f"/api/v1/shifts/{shift_id}", json={})
+        null_required = await client.patch(
+            f"/api/v1/shifts/{shift_id}", json={"start_at": None}
+        )
+        invalid_merged = await client.patch(
+            f"/api/v1/shifts/{shift_id}",
+            json={"end_at": "2026-09-03T08:00:00Z"},
+        )
+
+    assert empty_patch.status_code == 422
+    assert null_required.status_code == 422
+    assert invalid_merged.status_code == 422
+
+
+async def test_pay_rate_create_list_and_overlap_are_owner_isolated(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        first = await client.post(
+            "/api/v1/pay-rates",
+            json={
+                "hourly_rate": "200.50",
+                "effective_from": "2026-01-01",
+                "effective_to": "2026-06-30",
+            },
+        )
+        adjacent = await client.post(
+            "/api/v1/pay-rates",
+            json={"hourly_rate": "220.00", "effective_from": "2026-07-01"},
+        )
+        overlapping = await client.post(
+            "/api/v1/pay-rates",
+            json={"hourly_rate": "230.00", "effective_from": "2026-06-30"},
+        )
+        listed = await client.get("/api/v1/pay-rates")
+
+    assert first.status_code == 201
+    assert first.json()["hourly_rate"] == "200.50"
+    assert "owner_id" not in first.json()
+    assert adjacent.status_code == 201
+    assert overlapping.status_code == 409
+    assert listed.status_code == 200
+    assert [rate["hourly_rate"] for rate in listed.json()] == ["200.50", "220.00"]
+
+
+async def test_pay_rate_api_rejects_invalid_values(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        reversed_period = await client.post(
+            "/api/v1/pay-rates",
+            json={
+                "hourly_rate": "200.00",
+                "effective_from": "2026-08-01",
+                "effective_to": "2026-07-31",
+            },
+        )
+        excess_precision = await client.post(
+            "/api/v1/pay-rates",
+            json={"hourly_rate": "200.001", "effective_from": "2026-08-01"},
+        )
+
+    assert reversed_period.status_code == 422
+    assert excess_precision.status_code == 422
+
+
+async def test_pay_rate_update_delete_protect_usage_and_owner_isolation(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    _, _, other_owner = api_database
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        first = await client.post(
+            "/api/v1/pay-rates",
+            json={
+                "hourly_rate": "200.00",
+                "effective_from": "2026-01-01",
+                "effective_to": "2026-06-30",
+            },
+        )
+        second = await client.post(
+            "/api/v1/pay-rates",
+            json={"hourly_rate": "220.00", "effective_from": "2026-07-01"},
+        )
+        shift = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-01-31T16:30:00Z",
+                "end_at": "2026-01-31T18:30:00Z",
+                "shift_type": "day",
+            },
+        )
+
+        first_id = first.json()["id"]
+        second_id = second.json()["id"]
+        repriced = await client.patch(
+            f"/api/v1/pay-rates/{first_id}", json={"hourly_rate": "205.00"}
+        )
+        uncovered = await client.patch(
+            f"/api/v1/pay-rates/{first_id}", json={"effective_from": "2026-03-01"}
+        )
+        overlapping = await client.patch(
+            f"/api/v1/pay-rates/{first_id}", json={"effective_to": "2026-07-01"}
+        )
+        hidden_update = await client.patch(
+            f"/api/v1/pay-rates/{other_owner}", json={"hourly_rate": "1.00"}
+        )
+        used_delete = await client.delete(f"/api/v1/pay-rates/{first_id}")
+        hidden_delete = await client.delete(f"/api/v1/pay-rates/{other_owner}")
+        deleted = await client.delete(f"/api/v1/pay-rates/{second_id}")
+        deleted_again = await client.delete(f"/api/v1/pay-rates/{second_id}")
+
+    assert shift.status_code == 201
+    assert repriced.status_code == 200
+    assert repriced.json()["hourly_rate"] == "205.00"
+    assert uncovered.status_code == 409
+    assert overlapping.status_code == 409
+    assert hidden_update.status_code == 404
+    assert used_delete.status_code == 409
+    assert hidden_delete.status_code == 404
+    assert deleted.status_code == 204
+    assert deleted.content == b""
+    assert deleted_again.status_code == 404
+
+
+async def test_pay_rate_patch_rejects_empty_and_null_required_fields(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        created = await client.post(
+            "/api/v1/pay-rates",
+            json={"hourly_rate": "200.00", "effective_from": "2026-01-01"},
+        )
+        pay_rate_id = created.json()["id"]
+        empty_patch = await client.patch(f"/api/v1/pay-rates/{pay_rate_id}", json={})
+        null_rate = await client.patch(
+            f"/api/v1/pay-rates/{pay_rate_id}", json={"hourly_rate": None}
+        )
+
+    assert empty_patch.status_code == 422
+    assert null_rate.status_code == 422
+
+
+async def test_analytics_summary_matches_domain_and_is_owner_isolated(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        rate = await client.post(
+            "/api/v1/pay-rates",
+            json={"hourly_rate": "200.00", "effective_from": "2026-01-01"},
+        )
+        day_shift = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-01T01:00:00Z",
+                "end_at": "2026-09-01T09:00:00Z",
+                "break_minutes": 60,
+                "shift_type": "day",
+            },
+        )
+        night_shift = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-02T14:00:00Z",
+                "end_at": "2026-09-02T22:00:00Z",
+                "break_minutes": 30,
+                "shift_type": "night",
+            },
+        )
+        summary = await client.get(
+            "/api/v1/analytics/summary",
+            params={"date_from": "2026-09-01", "date_to": "2026-09-03"},
+        )
+
+    assert rate.status_code == 201
+    assert day_shift.status_code == 201
+    assert night_shift.status_code == 201
+    assert summary.status_code == 200
+    assert summary.json() == {
+        "date_from": "2026-09-01",
+        "date_to": "2026-09-03",
+        "timezone": "Asia/Taipei",
+        "currency": "TWD",
+        "shift_count": 2,
+        "total_paid_hours": "14.5",
+        "estimated_pay": "2900.00",
+        "shift_type_counts": {"day": 1, "night": 1},
+        "weekly_hours": {"2026-08-31": "14.5"},
+        "longest_consecutive_days": 2,
+    }
+
+
+async def test_analytics_summary_rejects_invalid_range_and_missing_rate(
+    api_database: tuple[Engine, AuthenticatedUser, UUID],
+) -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        shift = await client.post(
+            "/api/v1/shifts",
+            json={
+                "start_at": "2026-09-01T01:00:00Z",
+                "end_at": "2026-09-01T02:00:00Z",
+                "shift_type": "day",
+            },
+        )
+        missing_rate = await client.get(
+            "/api/v1/analytics/summary",
+            params={"date_from": "2026-09-01", "date_to": "2026-09-01"},
+        )
+        reversed_range = await client.get(
+            "/api/v1/analytics/summary",
+            params={"date_from": "2026-09-02", "date_to": "2026-09-01"},
+        )
+        excessive_range = await client.get(
+            "/api/v1/analytics/summary",
+            params={"date_from": "2026-01-01", "date_to": "2027-01-02"},
+        )
+
+    assert shift.status_code == 201
+    assert missing_rate.status_code == 409
+    assert reversed_range.status_code == 422
+    assert excessive_range.status_code == 422

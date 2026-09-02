@@ -770,7 +770,7 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M0 | Repository boundary and Codex context | — | COMPLETE |
 | M1 | Full-stack and Docker foundation | M0 | COMPLETE |
 | M2 | PostgreSQL, Auth and RLS | M1 | COMPLETE |
-| M3 | Schedule domain and Dashboard | M2 | NOT_STARTED |
+| M3 | Schedule domain and Dashboard | M2 | COMPLETED |
 | M4 | Gemini schedule import ETL | M3 | NOT_STARTED |
 | M5 | LangChain RAG and citations | M2 | NOT_STARTED |
 | M6 | LangGraph hybrid assistant | M3, M5 | NOT_STARTED |
@@ -876,6 +876,17 @@ Elevated。完成後 MAY 安排一個 bounded schema/RLS review。
 - Work-hours/payroll/consecutive-days deterministic calculators。
 - Dashboard summary charts。
 - Synthetic demo dataset。
+
+#### Current progress (2026-09-02)
+
+- Deterministic schedule/pay calculations, owner-scoped shift and pay-rate CRUD,
+  and the analytics summary API are implemented and verified.
+- The frontend now has a testable Supabase session gateway and typed authenticated
+  client for the M3 API surface.
+- Month/week views, dashboard summaries/charts, shift and pay-rate mutation UI,
+  and the credential-free synthetic read-only demo are implemented and verified.
+- The complete M3 acceptance gate passed on 2026-09-02; milestone status is
+  `COMPLETED`, and the user approved its commit and push.
 
 #### Acceptance gate
 

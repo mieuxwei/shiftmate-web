@@ -10,10 +10,10 @@ not contain or depend on the earlier `line-bot-calendar` project.
 
 ## Current status
 
-Milestone M1 is complete. M2 (PostgreSQL, Auth, and RLS) is in progress. Its
-complete local schema, pgvector migration, and owner-isolation foundation now
-pass against disposable PostgreSQL 17. Asymmetric JWT validation and
-transaction-scoped database identity are also locally verified. See
+Milestones M1–M3 are complete. The application now includes the PostgreSQL/RLS
+foundation, authenticated shift and effective-dated pay-rate CRUD, deterministic
+hours/pay analytics, month/week schedules, dashboard charts, and a credential-free
+synthetic read-only demo. M4 (Gemini schedule import ETL) is next. See
 [`docs/project-state.md`](docs/project-state.md) for the concise handoff and
 [`projectplan.md`](projectplan.md) for the complete execution specification.
 
@@ -65,7 +65,10 @@ pnpm --dir frontend dev
 ```
 
 Open `http://localhost:5173`. The Vite server proxies `/api` to FastAPI on port
-8000. No external credentials are needed for this documented demo state.
+8000. No external credentials are needed for the documented read-only demo:
+select **查看合成資料示範** on the landing page. To use authenticated CRUD,
+configure the public `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` values;
+never expose a service-role key to Vite.
 
 For the single-container production-like workflow, run:
 
@@ -78,7 +81,7 @@ The built React UI and API are then both available from `http://localhost:8000`.
 To run both hot-reload-oriented Compose services instead, use
 `docker compose --profile dev up --build` and open port 5173.
 
-Run the M1 application checks with:
+Run the application checks with:
 
 ```bash
 ruff format --check .
