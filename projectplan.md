@@ -775,7 +775,7 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M4 | Gemini schedule import ETL | M3 | COMPLETE |
 | M5 | LangChain RAG and citations | M2 | COMPLETE |
 | M6 | LangGraph hybrid assistant | M3, M5 | COMPLETE |
-| M7 | Google Calendar and ICS | M3 | NOT_STARTED |
+| M7 | Google Calendar and ICS | M3 | COMPLETE |
 | M8 | MCP Server | M3, M5, M6 | NOT_STARTED |
 | M9 | Security, scheduling and cost controls | M4, M5, M7, M8 | NOT_STARTED |
 | M10 | AI evaluation and reliability | M4, M5, M6 | NOT_STARTED |
@@ -1017,6 +1017,23 @@ Elevated。MUST 在 graph contract 固定後再實作 UI；完成後 MAY bounded
 - Create/update/delete sync service。
 - Sync status/retry model。
 - ICS exporter。
+
+#### Current progress (2026-09-02)
+
+- Web-server authorization-code flow uses PKCE plus an encrypted, ten-minute,
+  HttpOnly state cookie bound to the owner and a validated local return path.
+- Offline incremental authorization requests only
+  `calendar.events.owned`; refresh tokens use a separate at-rest encryption key
+  and access tokens remain request-local.
+- Owner-serialized create/update/delete sync uses stable provider-valid event
+  IDs, retry metadata, revoked-token states, and deletion tombstones so repeated
+  or uncertain sync does not duplicate events.
+- RFC 5545 ICS export remains available without OAuth configuration and is
+  generated only from owner-scoped confirmed shifts.
+- The authenticated UI exposes connection state, visible-range sync, revoked
+  authorization guidance, and an always-available ICS download.
+- OAuth/provider calls are contract-tested with synthetic responses; no live
+  credentials, Calendar data, paid resource, or cloud provisioning was used.
 
 #### Acceptance gate
 

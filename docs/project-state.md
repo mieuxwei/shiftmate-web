@@ -4,8 +4,8 @@ Last updated: 2026-09-02
 
 ## Current position
 
-- Last completed milestone: **M6 — LangGraph hybrid assistant**
-- Active milestone: **None; M7 not started**
+- Last completed milestone: **M7 — Google Calendar and ICS**
+- Active milestone: **None; M8 not started**
 - Blockers: none
 
 ## Completed
@@ -28,6 +28,20 @@ Last updated: 2026-09-02
   proxy workflow; pnpm dependencies use isolated named volumes.
 
 ## Latest milestone
+
+- M7 is complete: Google Calendar uses a web-server authorization-code flow
+  with PKCE, an encrypted short-lived HttpOnly state cookie, validated local
+  redirects, offline incremental authorization, and the narrow
+  `calendar.events.owned` scope.
+- Refresh tokens are encrypted with a distinct environment-provided key; access
+  tokens remain request-local. Revoked or corrupt tokens produce bounded safe
+  states and never change confirmed shift truth.
+- Sync is serialized per owner and uses deterministic Google-compatible event
+  IDs, owner/shift uniqueness, retry metadata, and deletion tombstones. Repeated
+  or uncertain create/update/delete operations do not create duplicate events.
+- Authenticated users can always export owner-scoped shifts as RFC 5545 ICS,
+  including when OAuth is unconfigured or Google is unavailable. The UI exposes
+  connection state, visible-range sync, errors, and ICS download.
 
 - M6 is complete: a typed, stateless LangGraph normalizes each request, routes
   deterministic-first across schedule, policy, hybrid, and unsupported nodes,
@@ -74,10 +88,9 @@ Last updated: 2026-09-02
 
 ## Next task packet
 
-Begin M7 with the Calendar OAuth/token boundary and zero-authorization ICS
-fallback contract, then continue through safe create/update/delete sync,
-idempotency and revoked-token handling, UI integration, and the complete M7
-gate. Stop before any paid resource or live credential-dependent action.
+Begin M8 with the read-only MCP transport and shared application-service
+adapters, then continue through its complete gate. Keep Calendar export shared
+with REST and MCP, and stop before any paid resource or live credential action.
 
 ## Known risks
 
@@ -93,3 +106,6 @@ gate. Stop before any paid resource or live credential-dependent action.
   transaction-pooled runtime path.
 - The Gemini request shape is covered with a mocked official REST contract, but
   a live call was intentionally not made because no user credential was supplied.
+- Google OAuth and Calendar REST shapes are covered with synthetic contract
+  tests. A deployment must register its exact callback URI and provide five
+  distinct secret/config values before live connection testing.

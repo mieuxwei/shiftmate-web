@@ -190,6 +190,24 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
                 """
             ).fetchall()
         }
+        calendar_connection_constraints = {
+            row[0]
+            for row in connection.execute(
+                """
+                SELECT conname FROM pg_constraint
+                WHERE conrelid = 'calendar_connections'::regclass
+                """
+            ).fetchall()
+        }
+        calendar_sync_constraints = {
+            row[0]
+            for row in connection.execute(
+                """
+                SELECT conname FROM pg_constraint
+                WHERE conrelid = 'calendar_sync_records'::regclass
+                """
+            ).fetchall()
+        }
         embedding_type = connection.execute(
             """
             SELECT format_type(attribute.atttypid, attribute.atttypmod)
@@ -236,6 +254,11 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
         "uq_shift_import_items_committed_shift",
     } <= import_item_constraints
     assert "uq_policy_documents_owner_sha256" in policy_constraints
+    assert "uq_calendar_connections_owner" in calendar_connection_constraints
+    assert {
+        "uq_calendar_sync_records_owner_shift",
+        "fk_calendar_sync_records_shift_owner",
+    } <= calendar_sync_constraints
     assert embedding_type == ("vector(768)",)
 
     downgrade("base")

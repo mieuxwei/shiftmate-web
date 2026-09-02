@@ -75,7 +75,8 @@ def api_database(
         admin.execute(
             "GRANT SELECT, INSERT, UPDATE, DELETE "
             "ON profiles, shifts, pay_rates, shift_imports, shift_import_items, "
-            "policy_documents, policy_chunks "
+            "policy_documents, policy_chunks, calendar_connections, "
+            "calendar_sync_records "
             "TO authenticated"
         )
         admin.execute(
@@ -398,7 +399,7 @@ async def test_shift_api_rejects_invalid_ranges_and_timestamps(
 async def test_shift_update_and_delete_are_owner_isolated(
     api_database: tuple[Engine, AuthenticatedUser, UUID],
 ) -> None:
-    _, _, other_owner = api_database
+    engine, owner, other_owner = api_database
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         created = await client.post(
@@ -424,9 +425,32 @@ async def test_shift_update_and_delete_are_owner_isolated(
             f"/api/v1/shifts/{other_owner}", json={"notes": "blocked"}
         )
         hidden_delete = await client.delete(f"/api/v1/shifts/{other_owner}")
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO calendar_sync_records (
+                        owner_id, shift_id, external_event_id, status
+                    )
+                    VALUES (:owner_id, :shift_id, 'shiftmatesynthetic', 'synced')
+                    """
+                ),
+                {"owner_id": owner.id, "shift_id": UUID(shift_id)},
+            )
         deleted = await client.delete(f"/api/v1/shifts/{shift_id}")
         deleted_again = await client.delete(f"/api/v1/shifts/{shift_id}")
         listed = await client.get("/api/v1/shifts")
+    with engine.begin() as connection:
+        tombstone = connection.execute(
+            text(
+                """
+                SELECT shift_id, external_event_id, status
+                FROM calendar_sync_records
+                WHERE owner_id = :owner_id
+                """
+            ),
+            {"owner_id": owner.id},
+        ).one()
 
     assert updated.status_code == 200
     assert updated.json()["work_date"] == "2026-09-04"
@@ -438,6 +462,7 @@ async def test_shift_update_and_delete_are_owner_isolated(
     assert deleted.content == b""
     assert deleted_again.status_code == 404
     assert listed.json() == []
+    assert tuple(tombstone) == (None, "shiftmatesynthetic", "pending_delete")
 
 
 async def test_shift_patch_rejects_empty_null_and_invalid_merged_values(

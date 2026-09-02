@@ -168,3 +168,23 @@ export type AssistantAnswer = {
   prompt_version: string | null
   model_name: string | null
 }
+
+export type CalendarConnectionStatus =
+  'disconnected' | 'active' | 'revoked' | 'error'
+
+export type CalendarStatus = {
+  configured: boolean
+  connection_status: CalendarConnectionStatus
+  scopes: string[]
+  ics_available: true
+}
+
+export type CalendarConnect = {
+  authorization_url: string
+}
+
+export type CalendarSync = {
+  synced: number
+  deleted: number
+  failed: number
+}

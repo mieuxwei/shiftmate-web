@@ -7,6 +7,10 @@ import {
   type AssistantClient,
 } from '../assistant/AssistantPanel'
 import { Dashboard } from '../dashboard/Dashboard'
+import {
+  CalendarManager,
+  type CalendarClient,
+} from '../calendar/CalendarManager'
 import { ImportManager, type ImportClient } from '../imports/ImportManager'
 import { PayRateManager } from '../payRates/PayRateManager'
 import { PolicyManager, type PolicyClient } from '../policies/PolicyManager'
@@ -43,6 +47,10 @@ export type WorkspaceClient = Pick<
       | 'createPolicy'
       | 'deletePolicy'
       | 'queryAssistant'
+      | 'getCalendarStatus'
+      | 'connectCalendar'
+      | 'syncCalendar'
+      | 'exportCalendar'
     >
   >
 
@@ -166,6 +174,9 @@ function RangeData({
   return (
     <>
       <Dashboard summary={data.summary} />
+      {!readOnly && hasCalendarClient(client) && (
+        <CalendarManager client={client} range={range} />
+      )}
       {!readOnly && hasImportClient(client) && (
         <ImportManager
           client={client}
@@ -217,5 +228,16 @@ function hasImportClient(
 ): client is WorkspaceClient & ImportClient {
   return Boolean(
     client.createImport && client.updateImportItem && client.commitImport,
+  )
+}
+
+function hasCalendarClient(
+  client: WorkspaceClient,
+): client is WorkspaceClient & CalendarClient {
+  return Boolean(
+    client.getCalendarStatus &&
+    client.connectCalendar &&
+    client.syncCalendar &&
+    client.exportCalendar,
   )
 }

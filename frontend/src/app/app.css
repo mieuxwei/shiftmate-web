@@ -977,6 +977,41 @@ h1 {
   font-weight: 700;
 }
 
+.calendar-copy,
+.calendar-hint {
+  color: #627169;
+  line-height: 1.6;
+}
+
+.calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.calendar-actions button {
+  padding: 0.72rem 1rem;
+  border: 1px solid rgb(27 43 36 / 18%);
+  border-radius: 999px;
+  background: transparent;
+  color: #425249;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.calendar-actions .primary-action {
+  border-color: #1b2b24;
+  background: #1b2b24;
+  color: #fff;
+}
+
+.calendar-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .preview {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

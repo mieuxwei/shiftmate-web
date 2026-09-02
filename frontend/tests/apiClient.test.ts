@@ -147,4 +147,29 @@ describe('ApiClient', () => {
       'Bearer synthetic-token',
     )
   })
+
+  it('downloads an authenticated ICS fallback for an explicit range', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/calendar' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const client = new ApiClient(() => 'synthetic-token')
+
+    const result = await client.exportCalendar({
+      dateFrom: '2026-09-01',
+      dateTo: '2026-09-30',
+    })
+
+    expect(result).toBeInstanceOf(Blob)
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(path).toBe(
+      '/api/v1/calendar/export.ics?date_from=2026-09-01&date_to=2026-09-30',
+    )
+    expect(new Headers(init.headers).get('Authorization')).toBe(
+      'Bearer synthetic-token',
+    )
+  })
 })

@@ -3,6 +3,51 @@
 Record commands and observable results here at milestone gates. Do not record
 secrets, tokens, private source data, or full model payloads.
 
+## 2026-09-02 — M7 Google Calendar and ICS milestone gate
+
+- Added web-server OAuth authorization-code flow with S256 PKCE, encrypted
+  ten-minute state cookies, exact state/owner binding, HttpOnly/Secure/SameSite
+  cookie attributes, and local-only return redirect validation.
+- Verified against current Google documentation that offline incremental access
+  and the narrow `calendar.events.owned` scope cover primary-calendar event
+  create/update/delete. No live credential or provider call was made.
+- Added separately encrypted refresh-token persistence, request-local access
+  tokens, bounded provider errors, revoked/corrupt token handling, and
+  owner-isolated connection state.
+- Added owner-serialized sync with stable base32hex-compatible event IDs,
+  insert-conflict update behavior, retry counters, and shift-deletion tombstones.
+  Provider failure changes only sync metadata and never confirmed shift truth.
+- Added RFC 5545 ICS export with stable UIDs, UTC times, escaping, UTF-8 line
+  folding, date filters, and authenticated owner-scoped retrieval. ICS remains
+  available when Google OAuth is unconfigured.
+- Added Calendar UI status, connect, visible-range sync, revoked/error messaging,
+  and authenticated ICS download. The fallback remains enabled independently of
+  OAuth configuration.
+- Added ADR 0004 and corrected the Dockerfile so the default build result is the
+  non-root production API while the explicit test stage writes coverage to
+  `/tmp`.
+- Backend source gate: `ruff format --check .`, `ruff check .`, and `mypy`
+  passed; mypy checked 56 application source files.
+- Backend full gate: `pytest --cov=backend.app --cov-report=term-missing` passed
+  with 78 tests, 15 integration skips, and 78% total coverage.
+- Disposable PostgreSQL feature gate:
+  `M2_TEST_DATABASE_URL=postgresql+psycopg://postgres:shiftmate_local_only@localhost:5432/shiftmate_test pytest -m integration`
+  passed 15 tests. This includes migration round-trip, forced RLS, owner
+  isolation, Calendar uniqueness, and synced-shift deletion tombstones.
+- Frontend gate ran in an identical Linux Node image because the desktop app's
+  signed Node runtime cannot load third-party Rolldown native bindings:
+  Prettier, ESLint, TypeScript, 11 Vitest files / 37 tests, and Vite production
+  build all passed.
+- Docker test stage passed 78 tests with 15 integration skips as non-root and
+  persisted coverage under `/tmp`. The final default `shiftmate-web:m7` image
+  uses user `app`, starts Uvicorn, and passed production health, Calendar
+  OpenAPI, and React UI smoke checks.
+- Calendar-focused synthetic tests cover OAuth state/redirect validation, PKCE,
+  encrypted tokens, provider `invalid_grant`, create-conflict update, repeated
+  sync idempotency, revoked/corrupt tokens, retryable failure, deletion, and ICS.
+- No secrets, private schedules, live Google Calendar data, paid services, or
+  cloud resources were used.
+
 ## 2026-09-02 — M6 LangGraph hybrid assistant milestone gate
 
 - Added the real typed LangGraph workflow specified in the plan: normalize,

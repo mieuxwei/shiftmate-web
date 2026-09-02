@@ -1,6 +1,9 @@
 import type {
   AnalyticsSummary,
   AssistantAnswer,
+  CalendarConnect,
+  CalendarStatus,
+  CalendarSync,
   DateRange,
   ImportCommit,
   ImportItemUpdate,
@@ -163,6 +166,31 @@ export class ApiClient {
     )
   }
 
+  getCalendarStatus(signal?: AbortSignal): Promise<CalendarStatus> {
+    return this.request('/api/v1/calendar/status', { signal })
+  }
+
+  connectCalendar(): Promise<CalendarConnect> {
+    return this.request('/api/v1/calendar/connect', {})
+  }
+
+  syncCalendar(range: DateRange): Promise<CalendarSync> {
+    return this.request(`/api/v1/calendar/sync?${dateRangeQuery(range)}`, {
+      method: 'POST',
+    })
+  }
+
+  async exportCalendar(range: DateRange): Promise<Blob> {
+    const accessToken = this.getAccessToken()
+    if (!accessToken) throw new AuthenticationRequiredError()
+    const response = await fetch(
+      `/api/v1/calendar/export.ics?${dateRangeQuery(range)}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    )
+    if (!response.ok) throw await this.apiError(response)
+    return response.blob()
+  }
+
   private jsonRequest(method: 'POST' | 'PATCH', payload: object): RequestInit {
     return {
       method,
@@ -180,17 +208,21 @@ export class ApiClient {
     const response = await fetch(path, { ...init, headers })
 
     if (!response.ok) {
-      let detail = `API request failed with status ${response.status}`
-      try {
-        const body = (await response.json()) as { detail?: unknown }
-        if (typeof body.detail === 'string') detail = body.detail
-      } catch {
-        // Keep the safe status-based fallback for non-JSON error responses.
-      }
-      throw new ApiError(response.status, detail)
+      throw await this.apiError(response)
     }
 
     if (response.status === 204) return undefined as T
     return (await response.json()) as T
+  }
+
+  private async apiError(response: Response): Promise<ApiError> {
+    let detail = `API request failed with status ${response.status}`
+    try {
+      const body = (await response.json()) as { detail?: unknown }
+      if (typeof body.detail === 'string') detail = body.detail
+    } catch {
+      // Keep the safe status-based fallback for non-JSON error responses.
+    }
+    return new ApiError(response.status, detail)
   }
 }

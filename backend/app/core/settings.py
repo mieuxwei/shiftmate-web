@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     rag_score_threshold: float = Field(default=0.55, ge=-1, le=1)
     upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1)
     upload_pdf_max_pages: int = Field(default=40, ge=1, le=40)
+    google_oauth_client_id: str | None = None
+    google_oauth_client_secret: str | None = None
+    google_oauth_redirect_uri: str | None = None
+    google_oauth_state_secret: str | None = None
+    calendar_token_encryption_key: str | None = None
+    google_oauth_timeout_seconds: float = Field(default=15, gt=0, le=60)
 
 
 @lru_cache

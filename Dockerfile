@@ -30,6 +30,11 @@ USER root
 RUN pip install --no-cache-dir ".[dev]"
 COPY evals/ ./evals/
 COPY frontend/src/demo/ ./frontend/src/demo/
-ENV APP_ENV=development
+ENV APP_ENV=development \
+    COVERAGE_FILE=/tmp/.coverage
 USER app
 CMD ["pytest", "-o", "cache_dir=/tmp/.pytest_cache", "--cov=backend.app", "--cov-report=term-missing"]
+
+# Keep the production runtime as the default build result. The test stage remains
+# available explicitly with `docker build --target test`.
+FROM runtime AS production

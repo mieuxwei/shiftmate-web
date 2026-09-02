@@ -172,6 +172,19 @@ class PostgresShiftRepository:
         return _to_record(row._mapping) if row is not None else None
 
     def delete_shift(self, connection: Connection, shift_id: UUID) -> bool:
+        connection.execute(
+            text(
+                """
+                UPDATE calendar_sync_records
+                SET status = 'pending_delete',
+                    last_error_code = NULL,
+                    updated_at = now()
+                WHERE shift_id = :shift_id
+                  AND status <> 'deleted'
+                """
+            ),
+            {"shift_id": shift_id},
+        )
         deleted_id = connection.execute(
             text("DELETE FROM shifts WHERE id = :shift_id RETURNING id"),
             {"shift_id": shift_id},
