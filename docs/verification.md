@@ -3,6 +3,47 @@
 Record commands and observable results here at milestone gates. Do not record
 secrets, tokens, private source data, or full model payloads.
 
+## 2026-09-02 — M5 LangChain RAG and citations
+
+- Added migration `20260902_0004`: policy embeddings are `vector(768)`, cosine
+  HNSW is indexed, `(owner_id, sha256)` is unique, and indexing failures use a
+  bounded error code. Empty-database upgrade, downgrade/upgrade, catalog checks,
+  and constraints passed on disposable PostgreSQL 17 plus pgvector.
+- The LangChain `BaseRetriever` runs on the authenticated request connection,
+  explicitly filters the current owner, and remains behind forced RLS. A real
+  cross-owner vector query and the policy API integration returned only User A's
+  synthetic chunk; User B's matching-vector injection text and document were
+  invisible.
+- Retrieval uses a no-op callback manager rather than environment-controlled
+  tracing, preventing accidental export of questions or policy chunks.
+- PDF validation, real text extraction, cleaning, overlapping per-page chunks,
+  temporary-file cleanup, normalized Gemini document/query embeddings, score
+  threshold refusal, grounded prompt boundaries, database-derived citations,
+  deletion, and concurrent-safe SHA-256 deduplication are covered by tests.
+- The UI lists/deletes documents, requires a synthetic/anonymous-data
+  confirmation before upload, queries ready policies, renders page citations,
+  and distinguishes explicit refusal from an answered question.
+- Offline `python evals/rag/evaluate.py` covered answerable, unanswerable,
+  conflicting, version-sensitive, and prompt-injection-like cases: Recall@k,
+  citation correctness, groundedness, and refusal accuracy were all `1.0`;
+  average synthetic latency was `73 ms` and total call count was `9`.
+- Backend gate: Ruff format/lint and strict mypy passed. The isolated Docker test
+  target ran all 71 unit/integration tests together against PostgreSQL and passed
+  with 93% `backend.app` coverage; the separate host PostgreSQL gate also passed
+  all 15 integration tests.
+- Frontend gate: Prettier, ESLint, TypeScript, all 32 Vitest tests, and the Vite
+  production build passed.
+- `docker build -t shiftmate-web:m5 .` passed. A non-root (`app`) container served
+  the production health endpoint, UI, and OpenAPI including
+  `/api/v1/assistant/query`.
+- The Dockerfile also exposes an isolated `test` target so the full backend gate
+  can be rerun without macOS file-provider reads; the production `runtime` target
+  remains non-root and excludes development dependencies.
+
+M5 passed its complete milestone gate and is `COMPLETE`. No live Gemini request,
+private document, credential, paid service, or cloud resource was used. The
+changes remain uncommitted pending explicit user approval.
+
 ## 2026-09-02 — M0 repository boundary and Codex context
 
 - `git remote -v`: fetch and push both target the independent

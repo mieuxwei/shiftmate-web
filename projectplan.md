@@ -773,7 +773,7 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M2 | PostgreSQL, Auth and RLS | M1 | COMPLETE |
 | M3 | Schedule domain and Dashboard | M2 | COMPLETE |
 | M4 | Gemini schedule import ETL | M3 | COMPLETE |
-| M5 | LangChain RAG and citations | M2 | NOT_STARTED |
+| M5 | LangChain RAG and citations | M2 | COMPLETE |
 | M6 | LangGraph hybrid assistant | M3, M5 | NOT_STARTED |
 | M7 | Google Calendar and ICS | M3 | NOT_STARTED |
 | M8 | MCP Server | M3, M5, M6 | NOT_STARTED |
@@ -952,6 +952,16 @@ Routine implementation；schema validation 與 prompt/eval gate 可使用 elevat
 - Document management UI。
 - Citation component。
 - Retrieval fixtures。
+
+#### Current progress (2026-09-02)
+
+- Owner-scoped PDF extraction/chunking, 768-dimensional Gemini embeddings,
+  pgvector cosine retrieval through a LangChain `BaseRetriever`, grounded
+  answering/refusal, database-derived page citations, SHA-256 deduplication,
+  document UI, and synthetic offline RAG evaluation are implemented.
+- The complete M5 acceptance gate passed locally against disposable PostgreSQL
+  17 + pgvector and the production container. No live Gemini call, private
+  document, credential, paid service, or cloud resource was used.
 
 #### Acceptance gate
 

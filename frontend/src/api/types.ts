@@ -105,3 +105,37 @@ export type ImportCommit = {
   status: 'committed'
   created_shift_ids: string[]
 }
+
+export type PolicyStatus = 'uploaded' | 'indexing' | 'ready' | 'failed'
+
+export type PolicyDocument = {
+  id: string
+  title: string
+  filename: string
+  status: PolicyStatus
+  page_count: number | null
+  error_code: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type PolicyUpload = {
+  document: PolicyDocument
+  duplicate: boolean
+}
+
+export type PolicyCitation = {
+  document_id: string
+  chunk_id: string
+  title: string
+  page_number: number
+  excerpt: string
+}
+
+export type PolicyAnswer = {
+  answer: string
+  refused: boolean
+  citations: PolicyCitation[]
+  prompt_version: string
+  model_name: string | null
+}

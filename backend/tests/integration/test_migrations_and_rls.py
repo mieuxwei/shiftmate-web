@@ -181,6 +181,23 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
                 """
             ).fetchall()
         }
+        policy_constraints = {
+            row[0]
+            for row in connection.execute(
+                """
+                SELECT conname FROM pg_constraint
+                WHERE conrelid = 'policy_documents'::regclass
+                """
+            ).fetchall()
+        }
+        embedding_type = connection.execute(
+            """
+            SELECT format_type(attribute.atttypid, attribute.atttypmod)
+            FROM pg_attribute AS attribute
+            WHERE attribute.attrelid = 'policy_chunks'::regclass
+              AND attribute.attname = 'embedding'
+            """
+        ).fetchone()
 
     assert APPLICATION_TABLES | {"alembic_version"} <= tables
     assert index_definition is not None
@@ -196,6 +213,7 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
     assert {
         "ix_pay_rates_owner_effective_from",
         "ix_policy_chunks_owner_document",
+        "ix_policy_chunks_embedding_cosine",
         "ix_shift_import_items_import",
         "ix_shift_imports_owner_created_at",
     } <= indexes
@@ -217,6 +235,8 @@ def test_migration_round_trip_builds_expected_schema(database_url: str) -> None:
         "uq_shift_import_items_import_index",
         "uq_shift_import_items_committed_shift",
     } <= import_item_constraints
+    assert "uq_policy_documents_owner_sha256" in policy_constraints
+    assert embedding_type == ("vector(768)",)
 
     downgrade("base")
     with psycopg.connect(psycopg_url(database_url)) as connection:
@@ -243,6 +263,10 @@ def test_rls_prevents_cross_owner_reads_and_writes(database_url: str) -> None:
     shift_a = uuid4()
     shift_b = uuid4()
     import_a = uuid4()
+    policy_a = uuid4()
+    policy_b = uuid4()
+    chunk_a = uuid4()
+    chunk_b = uuid4()
     role_name = f"shiftmate_test_{uuid4().hex}"
     start_at = datetime(2026, 9, 2, 1, 0, tzinfo=UTC)
 
@@ -269,6 +293,37 @@ def test_rls_prevents_cross_owner_reads_and_writes(database_url: str) -> None:
             VALUES (%s, %s, 'synthetic.png', 'image/png', %s)
             """,
             (import_a, user_a, "a" * 64),
+        )
+        embedding = "[1," + ",".join("0" for _ in range(767)) + "]"
+        admin.execute(
+            """
+            INSERT INTO policy_documents (
+                id, owner_id, title, filename, sha256, status, page_count
+            ) VALUES
+                (%s, %s, 'Synthetic Policy A', 'a.pdf', %s, 'ready', 1),
+                (%s, %s, 'Synthetic Policy B', 'b.pdf', %s, 'ready', 1)
+            """,
+            (policy_a, user_a, "b" * 64, policy_b, user_b, "c" * 64),
+        )
+        admin.execute(
+            """
+            INSERT INTO policy_chunks (
+                id, document_id, owner_id, content, page_number, chunk_index,
+                embedding
+            ) VALUES
+                (%s, %s, %s, 'Owner A policy text', 1, 0, %s::vector),
+                (%s, %s, %s, 'Owner B secret policy text', 1, 0, %s::vector)
+            """,
+            (
+                chunk_a,
+                policy_a,
+                user_a,
+                embedding,
+                chunk_b,
+                policy_b,
+                user_b,
+                embedding,
+            ),
         )
         with pytest.raises(psycopg.errors.ForeignKeyViolation):
             admin.execute(
@@ -332,6 +387,13 @@ def test_rls_prevents_cross_owner_reads_and_writes(database_url: str) -> None:
             visible_job_runs = connection.execute(
                 "SELECT id FROM scheduled_job_runs"
             ).fetchall()
+            visible_policy_chunks = connection.execute(
+                """
+                SELECT id, content FROM policy_chunks
+                ORDER BY embedding <=> %s::vector
+                """,
+                (embedding,),
+            ).fetchall()
             cross_owner_update = connection.execute(
                 "UPDATE shifts SET notes = 'blocked' WHERE id = %s", (shift_b,)
             )
@@ -343,6 +405,7 @@ def test_rls_prevents_cross_owner_reads_and_writes(database_url: str) -> None:
         assert visible_shifts == [(shift_a,)]
         assert visible_pay_rates == [(user_a,)]
         assert visible_job_runs == []
+        assert visible_policy_chunks == [(chunk_a, "Owner A policy text")]
         assert cross_owner_update.rowcount == 0
         assert cross_owner_delete.rowcount == 0
 

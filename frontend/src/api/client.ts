@@ -3,6 +3,9 @@ import type {
   DateRange,
   ImportCommit,
   ImportItemUpdate,
+  PolicyAnswer,
+  PolicyDocument,
+  PolicyUpload,
   PayRate,
   PayRateCreate,
   PayRateUpdate,
@@ -124,6 +127,35 @@ export class ApiClient {
     return this.request(
       `/api/v1/imports/${encodeURIComponent(importId)}/commit`,
       { method: 'POST' },
+    )
+  }
+
+  listPolicies(signal?: AbortSignal): Promise<PolicyDocument[]> {
+    return this.request('/api/v1/policies', { signal })
+  }
+
+  createPolicy(
+    title: string,
+    file: File,
+    confirmSafeData: boolean,
+  ): Promise<PolicyUpload> {
+    const body = new FormData()
+    body.set('title', title)
+    body.set('file', file)
+    body.set('confirm_safe_data', String(confirmSafeData))
+    return this.request('/api/v1/policies', { method: 'POST', body })
+  }
+
+  deletePolicy(documentId: string): Promise<void> {
+    return this.request(`/api/v1/policies/${encodeURIComponent(documentId)}`, {
+      method: 'DELETE',
+    })
+  }
+
+  queryPolicy(question: string): Promise<PolicyAnswer> {
+    return this.request(
+      '/api/v1/assistant/query',
+      this.jsonRequest('POST', { question }),
     )
   }
 

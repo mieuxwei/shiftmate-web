@@ -24,3 +24,12 @@ COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 USER app
 EXPOSE 8080
 CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+FROM runtime AS test
+USER root
+RUN pip install --no-cache-dir ".[dev]"
+COPY evals/ ./evals/
+COPY frontend/src/demo/ ./frontend/src/demo/
+ENV APP_ENV=development
+USER app
+CMD ["pytest", "-o", "cache_dir=/tmp/.pytest_cache", "--cov=backend.app", "--cov-report=term-missing"]

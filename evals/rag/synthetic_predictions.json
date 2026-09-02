@@ -1,0 +1,47 @@
+[
+  {
+    "id": "answerable-break",
+    "retrieved_chunk_ids": ["break-p2"],
+    "citation_chunk_ids": ["break-p2"],
+    "refused": false,
+    "grounded": true,
+    "latency_ms": 82,
+    "gemini_call_count": 2
+  },
+  {
+    "id": "unanswerable-chairperson",
+    "retrieved_chunk_ids": [],
+    "citation_chunk_ids": [],
+    "refused": true,
+    "grounded": true,
+    "latency_ms": 31,
+    "gemini_call_count": 1
+  },
+  {
+    "id": "conflicting-overtime",
+    "retrieved_chunk_ids": ["overtime-new-p1", "overtime-old-p4"],
+    "citation_chunk_ids": ["overtime-new-p1", "overtime-old-p4"],
+    "refused": false,
+    "grounded": true,
+    "latency_ms": 91,
+    "gemini_call_count": 2
+  },
+  {
+    "id": "version-sensitive-leave",
+    "retrieved_chunk_ids": ["leave-2026-p3"],
+    "citation_chunk_ids": ["leave-2026-p3"],
+    "refused": false,
+    "grounded": true,
+    "latency_ms": 77,
+    "gemini_call_count": 2
+  },
+  {
+    "id": "injection-like-policy",
+    "retrieved_chunk_ids": ["security-p5"],
+    "citation_chunk_ids": ["security-p5"],
+    "refused": false,
+    "grounded": true,
+    "latency_ms": 84,
+    "gemini_call_count": 2
+  }
+]

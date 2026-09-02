@@ -4,8 +4,8 @@ Last updated: 2026-09-02
 
 ## Current position
 
-- Last completed milestone: **M4 — Gemini schedule import ETL**
-- Active milestone: **None; M5 not started**
+- Last completed milestone: **M5 — LangChain RAG and citations**
+- Active milestone: **None; M6 not started**
 - Blockers: none
 
 ## Completed
@@ -45,12 +45,23 @@ Last updated: 2026-09-02
   makes repeated or concurrent commits idempotent.
 - The synthetic offline OCR fixture covers nine required case families and
   reports exact date/time, missing/extra, schema-valid, and review-recall metrics.
+- M5 adds owner-isolated policy PDF indexing and management, per-page cleaning
+  and chunking, normalized 768-dimensional Gemini embeddings, a LangChain
+  retriever over pgvector, relevance-threshold refusal, grounded answers, and
+  database-derived page citations.
+- Owner+SHA-256 uniqueness handles repeated/concurrent uploads. Retrieved text
+  is delimited as untrusted evidence, and policy upload requires confirmation
+  that the file is synthetic or anonymized.
+- The synthetic RAG fixture covers answerable, unanswerable, conflicting,
+  version-sensitive, and prompt-injection-like cases and reports Recall@k,
+  citation correctness, groundedness, refusal accuracy, latency, and call count.
 
 ## Next task packet
 
-Begin M5 with owner-isolated policy PDF upload/extraction and page metadata, then
-continue through retrieval, grounded answers/citations, UI, evaluation, and the
-complete M5 gate. Do not provision or call a paid service without approval.
+Begin M6 with deterministic intent normalization/routing for schedule, policy,
+hybrid, and unsupported questions, then continue through the LangGraph workflow,
+evidence validation, bounded answers, UI integration, routing fixtures, and the
+complete M6 gate. Do not let the LLM execute SQL or calculate payroll.
 
 ## Known risks
 

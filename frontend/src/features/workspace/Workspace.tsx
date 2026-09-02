@@ -5,6 +5,7 @@ import type { AnalyticsSummary, DateRange, Shift } from '../../api/types'
 import { Dashboard } from '../dashboard/Dashboard'
 import { ImportManager, type ImportClient } from '../imports/ImportManager'
 import { PayRateManager } from '../payRates/PayRateManager'
+import { PolicyManager, type PolicyClient } from '../policies/PolicyManager'
 import {
   moveAnchor,
   periodLabel,
@@ -30,7 +31,14 @@ export type WorkspaceClient = Pick<
   Partial<
     Pick<
       ApiClient,
-      'createImport' | 'getImport' | 'updateImportItem' | 'commitImport'
+      | 'createImport'
+      | 'getImport'
+      | 'updateImportItem'
+      | 'commitImport'
+      | 'listPolicies'
+      | 'createPolicy'
+      | 'deletePolicy'
+      | 'queryPolicy'
     >
   >
 
@@ -161,6 +169,9 @@ function RangeData({
           timezone={data.summary.timezone}
         />
       )}
+      {!readOnly && hasPolicyClient(client) && (
+        <PolicyManager client={client} />
+      )}
       <ScheduleView
         mode={mode}
         range={range}
@@ -177,6 +188,17 @@ function RangeData({
         />
       )}
     </>
+  )
+}
+
+function hasPolicyClient(
+  client: WorkspaceClient,
+): client is WorkspaceClient & PolicyClient {
+  return Boolean(
+    client.listPolicies &&
+    client.createPolicy &&
+    client.deletePolicy &&
+    client.queryPolicy,
   )
 }
 
