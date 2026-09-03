@@ -33,8 +33,12 @@
   in Secret Manager, WIF remains exact-branch and keyless, the full paid account
   remains inactive, and no private data or live Gemini request was used.
 
-M11 acceptance passed. The remaining synthetic-demo follow-up must pass remote
-Validate and Release before starting M12.
+The synthetic-demo follow-up was committed as `8867ed1`; Validate #16 and
+Release #4 passed. Browser verification on the deployed revision showed
+`API 已連線 · production`, exposed the signed-out demo control, rendered the
+synthetic `$8,000.00` total and `22:00–06:00` overnight shift, and exposed no
+shift-create control. M11 acceptance passed; M12 may start only after explicit
+approval.
 
 ## 2026-09-03 — M11 deployment workflow and bootstrap slice
 

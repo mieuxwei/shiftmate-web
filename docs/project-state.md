@@ -33,7 +33,7 @@ Last updated: 2026-09-03
   `asia-east1`. The production application is available at
   `https://shiftmate-web-fucvnupudq-de.a.run.app`; the project remains on the
   Free Trial and the full paid account remains inactive.
-- GitHub Validate #15 and Release #3 passed for commit `a5fc395`. The release
+- GitHub Validate #16 and Release #4 passed for commit `8867ed1`. The release
   workflow uses branch-restricted WIF, runs production migrations, publishes an
   immutable image, deploys one bounded Cloud Run revision, reconciles the one
   authenticated Scheduler job, and runs deployed-policy smoke checks.
