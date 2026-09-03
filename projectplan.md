@@ -779,7 +779,7 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M8 | MCP Server | M3, M5, M6 | COMPLETE |
 | M9 | Security, scheduling and cost controls | M4, M5, M7, M8 | COMPLETE |
 | M10 | AI evaluation and reliability | M4, M5, M6 | COMPLETE |
-| M11 | Cloud Run CI/CD deployment | M9, M10 | IN_PROGRESS |
+| M11 | Cloud Run CI/CD deployment | M9, M10 | COMPLETE |
 | M12 | Portfolio release | M11 | NOT_STARTED |
 
 ### M0 — Repository boundary and Codex context
@@ -1156,6 +1156,16 @@ Elevated for metric design and failure analysis；資料整理/報告生成 rout
 - Production migrations procedure。
 - Post-deploy health/smoke workflow。
 - Rollback and teardown procedures。
+
+#### Completion notes (2026-09-03)
+
+- GitHub Validate #15 and Release #3 passed for the least-privilege WIF
+  deployment path; no service-account JSON key exists。
+- The production container, migrations, Secret Manager mounts, and the single
+  OIDC Scheduler job are live in `asia-east1`。
+- Deployed verification passed for request-based/min0/max1, bounded resources,
+  health, SPA delivery, and Scheduler reconciliation；unauthorized maintenance
+  requests fail with 401。
 
 #### Acceptance gate
 

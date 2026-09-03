@@ -112,33 +112,41 @@ export function App({
           )}
 
           {auth.state.kind === 'signed-out' && (
-            <form onSubmit={handleSignIn}>
-              <label>
-                電子郵件
-                <input
-                  autoComplete="email"
-                  name="email"
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  type="email"
-                  value={email}
-                />
-              </label>
-              <label>
-                密碼
-                <input
-                  autoComplete="current-password"
-                  name="password"
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  type="password"
-                  value={password}
-                />
-              </label>
-              <button disabled={auth.isSubmitting} type="submit">
-                {auth.isSubmitting ? '登入中…' : '登入'}
+            <div className="demo-invite">
+              <form onSubmit={handleSignIn}>
+                <label>
+                  電子郵件
+                  <input
+                    autoComplete="email"
+                    name="email"
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                    type="email"
+                    value={email}
+                  />
+                </label>
+                <label>
+                  密碼
+                  <input
+                    autoComplete="current-password"
+                    name="password"
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
+                    type="password"
+                    value={password}
+                  />
+                </label>
+                <button disabled={auth.isSubmitting} type="submit">
+                  {auth.isSubmitting ? '登入中…' : '登入'}
+                </button>
+              </form>
+              <button
+                onClick={() => setShowDemo((value) => !value)}
+                type="button"
+              >
+                {showDemo ? '關閉合成示範' : '查看合成資料示範'}
               </button>
-            </form>
+            </div>
           )}
 
           {auth.state.kind === 'signed-in' && (
@@ -167,16 +175,18 @@ export function App({
 
       {auth.state.kind === 'signed-in' && <Workspace client={apiClient} />}
 
-      {auth.state.kind === 'unconfigured' && showDemo && (
-        <div className="demo-workspace">
-          <p>唯讀合成資料 · 不連線、不建立帳號、不寫入資料庫</p>
-          <Workspace
-            client={syntheticDemoClient}
-            initialDate="2026-09-02"
-            readOnly
-          />
-        </div>
-      )}
+      {(auth.state.kind === 'unconfigured' ||
+        auth.state.kind === 'signed-out') &&
+        showDemo && (
+          <div className="demo-workspace">
+            <p>唯讀合成資料 · 不連線、不建立帳號、不寫入資料庫</p>
+            <Workspace
+              client={syntheticDemoClient}
+              initialDate="2026-09-02"
+              readOnly
+            />
+          </div>
+        )}
 
       <section className="preview" aria-label="功能預覽">
         <article>

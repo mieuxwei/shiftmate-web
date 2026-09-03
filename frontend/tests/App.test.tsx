@@ -144,6 +144,33 @@ describe('App', () => {
     )
   })
 
+  it('keeps the synthetic demo available when production auth is configured', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ status: 'ok', environment: 'production' }),
+            { status: 200 },
+          ),
+        ),
+    )
+    const { gateway } = signedOutGateway()
+
+    render(<App authGateway={gateway} />)
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: '查看合成資料示範' }),
+    )
+
+    expect(await screen.findByText(/8,000/)).toBeInTheDocument()
+    expect(screen.getByText('22:00–06:00')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '新增班次' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('shows an existing session and signs out safely', async () => {
     vi.stubGlobal(
       'fetch',

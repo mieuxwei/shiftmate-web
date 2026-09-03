@@ -1,5 +1,41 @@
 # Verification log
 
+## 2026-09-03 — M11 Cloud Run CI/CD deployment milestone gate
+
+- M11 implementation was committed as `a206a06`. Validate #13 passed and
+  started Release #1. That release safely stopped before revision creation
+  because `@` was incorrectly used as the `gcloud --set-env-vars` delimiter
+  while a service-account email also contained `@`.
+- Commit `6d6d3be` changed the delimiter to `~` and added regression assertions.
+  Validate #14 passed. Release #2 created revision `shiftmate-web-00002-c45`
+  and routed 100% traffic, then failed only on a redundant second service update
+  that required project-wide `run.revisions.list`.
+- Commit `a5fc395` removed that second update and supplies the stable service URL
+  in the single deploy operation. This preserved service-scoped Cloud Run IAM
+  instead of broadening the deployer role. Validate #15 and Release #3 passed.
+- The Release #3 gate verified request-based CPU throttling, min 0, max 1,
+  1 CPU, 512 MiB, concurrency 4, timeout 120 seconds, one container, no VPC
+  connector, the production health response, SPA delivery, and exactly one
+  `daily-maintenance` Scheduler job in `asia-east1`.
+- An independent public smoke check returned
+  `{"status":"ok","environment":"production"}` from `/api/v1/health`, the
+  ShiftMate title from `/`, and 401 for an unauthenticated POST to
+  `/api/v1/internal/daily-maintenance`.
+- Production inspection found that configured Supabase auth hid the advertised
+  credential-free demo. The follow-up keeps the synthetic read-only demo
+  available to signed-out users without creating an account, querying the
+  database, or calling Gemini. Prettier, ESLint, strict TypeScript, 11 test
+  files / 38 tests, and the production build passed in an identical clean
+  temporary copy; the working-tree Vitest attempt encountered the previously
+  documented macOS file-provider worker timeout before running tests.
+- The application is live at
+  `https://shiftmate-web-fucvnupudq-de.a.run.app`. Six production secrets remain
+  in Secret Manager, WIF remains exact-branch and keyless, the full paid account
+  remains inactive, and no private data or live Gemini request was used.
+
+M11 acceptance passed. The remaining synthetic-demo follow-up must pass remote
+Validate and Release before starting M12.
+
 ## 2026-09-03 — M11 deployment workflow and bootstrap slice
 
 - Created the exact non-secret production target for project

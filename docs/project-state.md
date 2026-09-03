@@ -4,10 +4,9 @@ Last updated: 2026-09-03
 
 ## Current position
 
-- Last completed milestone: **M10 — AI evaluation and reliability**
-- Active milestone: **M11 — Cloud Run CI/CD deployment**
-- Blockers: explicit M11 commit/push approval is required before the release
-  workflow can replace the temporary revision and complete the deployed gate
+- Last completed milestone: **M11 — Cloud Run CI/CD deployment**
+- Active milestone: none; **M12 — Portfolio release** awaits explicit approval
+- Blockers: none for M11
 
 ## Completed
 
@@ -30,27 +29,28 @@ Last updated: 2026-09-03
 
 ## Latest milestone
 
-- M11 is active for the dedicated `my-shiftmate-web-prod-95939` GCP project in
-  `asia-east1`. The project is linked to a Free Trial billing account; the
-  full paid account remains inactive.
-- The first M11 implementation slice adds a post-Validate release workflow,
-  immutable image deployment, production migrations, Scheduler reconciliation,
-  deployed-policy smoke checks, branch-restricted WIF bootstrap, exact
-  non-secret production identifiers, and rollback/teardown documentation.
+- M11 is complete for the dedicated `my-shiftmate-web-prod-95939` GCP project in
+  `asia-east1`. The production application is available at
+  `https://shiftmate-web-fucvnupudq-de.a.run.app`; the project remains on the
+  Free Trial and the full paid account remains inactive.
+- GitHub Validate #15 and Release #3 passed for commit `a5fc395`. The release
+  workflow uses branch-restricted WIF, runs production migrations, publishes an
+  immutable image, deploys one bounded Cloud Run revision, reconciles the one
+  authenticated Scheduler job, and runs deployed-policy smoke checks.
 - The NT$1 Cloud Run spend guardrail is active with 50%, 80%, and 100% email
   notifications. It is a preview enforcement control rather than an
   instantaneous or absolute billing guarantee.
 - Required APIs, three narrowly scoped service accounts, the same-region
   Artifact Registry repository and cleanup policy, and branch-restricted GitHub
   WIF now exist. No service-account JSON key was created.
-- Four Secret Manager values now hold the separated runtime/session-pooler
-  database URLs and distinct OAuth-state/Calendar-token encryption material.
-  The Gemini and Google OAuth client-secret containers remain empty.
-- The first bounded Cloud Run service exists with a temporary public hello
-  revision. Its deployed configuration verifies request-based CPU throttling,
+- Six Secret Manager values hold the separated runtime/session-pooler database
+  URLs, Gemini key, OAuth client secret, OAuth-state secret, and Calendar-token
+  encryption material. No secret value is stored in GitHub or the repository.
+- The real ShiftMate container now serves 100% of Cloud Run traffic. Its
+  deployed configuration verifies request-based CPU throttling,
   min 0, max 1, 1 CPU, 512 MiB, concurrency 4, timeout 120 seconds, gen2, and no
-  startup CPU boost. The deployer has service-only administration and the
-  Scheduler identity has service-only invocation; no Scheduler job exists yet.
+  startup CPU boost. The deployer retains service-only administration and the
+  Scheduler identity retains service-only invocation.
 - Production Alembic migrations completed from revision `20260902_0002` through
   `20260903_0006` over the IPv4-compatible session pooler. The runtime login is
   non-owner/non-`BYPASSRLS` and verified as a member of only the intended
@@ -63,10 +63,14 @@ Last updated: 2026-09-03
   Generative Language API and stored in Secret Manager. Both exposed/unused
   predecessors were permanently deleted. GitHub's production environment now
   has all eleven non-secret variables, including the public OAuth client ID.
-- GitHub's `production` environment accepts only `main` and contains the ten
+- Exactly one `daily-maintenance` Scheduler job exists in `asia-east1` and uses
+  OIDC to call the internal endpoint. The release gate verified it along with
+  Cloud Run policy, production health, and SPA delivery; an independent
+  unauthenticated POST to the internal endpoint returned 401.
+- GitHub's `production` environment accepts only `main` and contains eleven
   non-secret deployment variables. Local release validators, Ruff, mypy,
   offline tests/evaluations, frontend quality/build gates, Docker build, health
-  check, and SPA smoke check pass.
+  check, and SPA smoke checks pass.
 
 - M10 is complete: `python evals/run.py` rebuilds four versioned reports from
   synthetic fixtures, while `--check` makes stale reports fail locally and in
@@ -179,10 +183,9 @@ Last updated: 2026-09-03
 
 ## Next task packet
 
-After explicit M11 commit/push approval, commit the verified milestone files and
-push `main`. Observe Validate and the dependent Release workflow, diagnose any
-failure, verify the application revision and Scheduler, then run the full
-deployed milestone gate. Stop before any payment or plan upgrade.
+Await explicit approval to start M12. The next packet should focus only on the
+portfolio release gate, public documentation, final security/cost review, and
+`v1.0.0`; stop before any payment or plan upgrade.
 
 ## Known risks
 
