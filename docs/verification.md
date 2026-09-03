@@ -2,6 +2,19 @@
 
 ## 2026-09-03 — M12 portfolio release candidate gate
 
+- Approved M12 commit `287f76a` passed GitHub Validate #18: backend, frontend,
+  and container jobs all succeeded, including 12 frontend test files and all
+  43 tests. GitHub emitted only non-blocking deprecation notices for the Node 20
+  runtime bundled by upstream Action releases.
+- GitHub Release workflow #6 succeeded in 2m 11s. It validated production
+  configuration, ran idempotent migrations, built and pushed the immutable
+  image, deployed the bounded Cloud Run revision, reconciled the single
+  Scheduler job, and passed the deployed policy/smoke gate.
+- Post-deployment browser verification loaded the public `/#reviewer` deep link,
+  traversed from case 1 to case 5, confirmed the repository/OpenAPI/evaluation/
+  video evidence links, and found no horizontal overflow at 390×844. Production
+  Swagger reports ShiftMate Web API `1.0.0`.
+
 - Added a public dark `/#reviewer` route and primary homepage CTA while keeping
   the bright synthetic product demo. Five versioned local fixture cases cover
   deterministic schedule/pay results, Gemini import review, grounded RAG and
@@ -44,10 +57,9 @@
   synthetic/placeholding values. No secret, private data, live Gemini/Calendar
   call, paid service, production database read, or cloud mutation was used.
 
-This is the fully verified local release candidate, not the completed M12
-deployment gate. Commit, push, Cloud Run deployment, annotated `v1.0.0` tag,
-GitHub Release asset publication, deployed browser/smoke verification, and the
-final billing/Artifact Registry review await one explicit grouped approval.
+The local and deployed M12 gates passed. The user granted the grouped release
+approval; the final delivery is the annotated `v1.0.0` tag and GitHub Release
+containing the verified MP4 asset.
 
 ## 2026-09-03 — M11 Cloud Run CI/CD deployment milestone gate
 

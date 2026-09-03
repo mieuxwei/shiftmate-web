@@ -4,10 +4,9 @@ Last updated: 2026-09-03
 
 ## Current position
 
-- Last completed milestone: **M11 — Cloud Run CI/CD deployment**
-- Active milestone: **M12 — Portfolio release**
-- Blockers: explicit grouped approval for commit, push, deployment, tag, and
-  GitHub Release publication
+- Last completed milestone: **M12 — Portfolio release**
+- Active milestone: **None**
+- Blockers: none
 
 ## Completed
 
@@ -29,6 +28,14 @@ Last updated: 2026-09-03
   proxy workflow; pnpm dependencies use isolated named volumes.
 
 ## Latest milestone
+
+- M12 is complete. Commit `287f76a` passed GitHub Validate #18 and Release #6;
+  the production deployment, policy verification, and smoke test all passed.
+  The public `/#reviewer` route was then verified on desktop and at 390×844
+  without horizontal overflow, and production Swagger reports API `1.0.0`.
+- The approved `v1.0.0` delivery publishes the reproducible 18,268,741-byte
+  bilingual MP4 as `shiftmate-demo.mp4`. The repository and deployed reviewer
+  use the stable GitHub Release asset URL.
 
 - M12 implementation and its local release-equivalent gate are complete. The
   public frontend adds a dark five-step `/#reviewer` showcase backed only by
