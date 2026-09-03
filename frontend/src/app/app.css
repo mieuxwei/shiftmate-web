@@ -37,7 +37,12 @@ main {
 }
 
 .hero {
-  max-width: 760px;
+  max-width: 920px;
+}
+
+.hero h1 {
+  max-width: 900px;
+  font-size: clamp(3rem, 7vw, 6rem);
 }
 
 .eyebrow {
@@ -104,6 +109,25 @@ h1 {
   border: 1px solid rgb(27 43 36 / 12%);
   border-radius: 1.25rem;
   background: rgb(250 249 244 / 78%);
+}
+
+.hero-proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-proof li {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgb(27 43 36 / 12%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 45%);
+  color: #506159;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .auth__kicker {
@@ -1105,6 +1129,7 @@ h1 {
 }
 
 .reviewer-header,
+.reviewer-scenario,
 .reviewer-progress,
 .reviewer-stage,
 .reviewer-controls {
@@ -1112,6 +1137,31 @@ h1 {
   z-index: 1;
   width: min(1280px, 100%);
   margin-inline: auto;
+}
+
+.reviewer-scenario {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: clamp(1.5rem, 3vw, 2.5rem);
+  padding: 1rem 1.25rem;
+  border: 1px solid rgb(143 190 160 / 20%);
+  border-radius: 1rem;
+  background: rgb(143 190 160 / 7%);
+}
+
+.reviewer-scenario span {
+  color: #8fbea0;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.reviewer-scenario p {
+  margin: 0;
+  color: #c4d0c9;
+  line-height: 1.65;
 }
 
 .reviewer-header {
@@ -1167,7 +1217,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.45rem;
-  margin-top: clamp(2rem, 5vw, 4rem);
+  margin-top: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .reviewer-progress button {
@@ -1209,10 +1259,35 @@ h1 {
   line-height: 0.98;
 }
 
-.reviewer-intro > p:last-child {
+.reviewer-intro > p {
   max-width: 520px;
   color: #aab9b0;
   line-height: 1.8;
+}
+
+.reviewer-takeaways {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0;
+}
+
+.reviewer-takeaways div {
+  padding-left: 0.9rem;
+  border-left: 2px solid rgb(143 190 160 / 32%);
+}
+
+.reviewer-takeaways dt {
+  color: #8fbea0;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.reviewer-takeaways dd {
+  margin: 0.35rem 0 0;
+  color: #c4d0c9;
+  font-size: 0.82rem;
+  line-height: 1.55;
 }
 
 .reviewer-evidence {
@@ -1346,6 +1421,11 @@ h1 {
   color: #e4bd7b;
 }
 
+.reviewer-candidates article > span[data-status='ready'] {
+  background: rgb(143 190 160 / 22%);
+  color: #c8ebd4;
+}
+
 .reviewer-candidates article p {
   grid-column: 1 / -1;
   margin: 0;
@@ -1356,6 +1436,44 @@ h1 {
 .reviewer-boundary {
   margin: 0;
   padding: 1rem 1.25rem;
+}
+
+.reviewer-try {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgb(143 190 160 / 22%);
+  border-radius: 1rem;
+  background: rgb(143 190 160 / 8%);
+}
+
+.reviewer-try p {
+  margin: 0.35rem 0 0;
+  color: #c4d0c9;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.reviewer-inline-action,
+.reviewer-choice button {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgb(143 190 160 / 32%);
+  border-radius: 999px;
+  background: transparent;
+  color: #dce4df;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.reviewer-inline-action[aria-pressed='true'],
+.reviewer-choice button[aria-pressed='true'] {
+  border-color: #8fbea0;
+  background: #8fbea0;
+  color: #0e1814;
 }
 
 .reviewer-case--rag,
@@ -1388,6 +1506,33 @@ h1 {
 
 .reviewer-refusal {
   align-self: end;
+}
+
+.reviewer-refusal-result {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-left: 2px solid #e4bd7b;
+  background: rgb(213 168 93 / 9%);
+}
+
+.reviewer-refusal-result strong {
+  color: #e4bd7b;
+}
+
+.reviewer-refusal-result p {
+  margin-bottom: 0;
+}
+
+.reviewer-choice {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.9rem 0;
+}
+
+.reviewer-choice--row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0;
 }
 
 .reviewer-refusal > span,
@@ -1562,7 +1707,8 @@ h1 {
 
   .reviewer-header,
   .reviewer-header__actions,
-  .reviewer-controls {
+  .reviewer-controls,
+  .reviewer-try {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -1572,14 +1718,13 @@ h1 {
   }
 
   .reviewer-progress {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(5, minmax(8rem, 1fr));
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: 0.35rem;
   }
 
   .reviewer-progress button {
-    display: none;
-  }
-
-  .reviewer-progress button[aria-current='step'] {
     display: flex;
   }
 
@@ -1603,6 +1748,10 @@ h1 {
   }
 
   .reviewer-proof-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .reviewer-scenario {
     grid-template-columns: 1fr;
   }
 }

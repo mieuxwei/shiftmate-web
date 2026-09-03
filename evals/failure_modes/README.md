@@ -5,7 +5,7 @@ expected behavior and deterministic pytest node. The tests inject failures into
 the production authentication, import, and Calendar service boundaries; they do
 not call Gemini, Supabase, Google, or any paid platform.
 
-Run the complete M10 evaluation gate from the repository root:
+Run the complete offline evaluation gate from the repository root:
 
 ```bash
 python evals/run.py --check

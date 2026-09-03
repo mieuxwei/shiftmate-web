@@ -1,7 +1,7 @@
 # Zero-cost operations runbook
 
-Last policy check: 2026-09-03. This runbook is a deployment design only. M9
-created no GCP resource, used no live credential, and enabled no paid feature.
+Last policy check: 2026-09-03. The controls below define the intended
+zero-cost deployment envelope and the checks required before changing it.
 
 ## Hard deployment envelope
 
@@ -92,8 +92,8 @@ retention; it never performs embeddings or long-running AI work.
 
 ## Incident stop and teardown
 
-These are review steps for M11; resolve exact project, region, service and
-repository names with read-only `describe`/`list` commands before deletion.
+Resolve exact project, region, service and repository names with read-only
+`describe`/`list` commands before deletion.
 
 1. Pause `daily-maintenance` and set the Cloud Run service maximum instance
    count to zero to stop new compute while preserving configuration.

@@ -1,4 +1,4 @@
-# M11 production deployment
+# Production deployment
 
 The production target is one Cloud Run service in `asia-east1` inside the
 dedicated `my-shiftmate-web-prod-95939` project. Artifact Registry is
@@ -82,7 +82,7 @@ the new image. A failed deploy does not trigger an automatic downgrade.
 
 ## Verification
 
-The release workflow runs `scripts/verify_m11_deployment.sh`. It verifies the
+The release workflow runs `scripts/verify_deployment.sh`. It verifies the
 deployed CPU, memory, concurrency, timeout, CPU throttling, min/max scaling,
 single container, absent VPC connector/GPU configuration, health endpoint,
 SPA response, and exactly one Scheduler job. Also inspect:

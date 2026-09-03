@@ -29,7 +29,7 @@ def main() -> None:
     assert scheduler["httpMethod"] == "POST"
     assert scheduler["oidc"]["audience"].startswith("https://")
     assert scheduler["description"].startswith("Idempotent cleanup")
-    print("M9 configuration policy is valid")
+    print("Runtime configuration policy is valid")
 
 
 if __name__ == "__main__":

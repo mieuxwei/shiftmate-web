@@ -1,4 +1,4 @@
-# M10 offline evaluation report
+# Offline evaluation report
 
 Generated from versioned synthetic fixtures by `python evals/run.py`.
 No network, credential, database, paid platform, or live model is used.

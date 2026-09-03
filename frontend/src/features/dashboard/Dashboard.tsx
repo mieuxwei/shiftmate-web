@@ -106,8 +106,8 @@ export function Dashboard({ summary }: DashboardProps) {
       )}
 
       <div className="integration-status" aria-label="整合狀態">
-        <span>最近匯入：M4 啟用</span>
-        <span>Calendar 同步：M7 啟用</span>
+        <span>班表匯入：人工覆核後確認</span>
+        <span>Calendar：可選擇同步或匯出 ICS</span>
       </div>
       <p className="calculation-note">
         工時與預估薪資由後端 deterministic service

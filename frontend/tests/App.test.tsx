@@ -71,7 +71,7 @@ describe('App', () => {
     render(<App authGateway={null} />)
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      '你的班表，清楚而安心。',
+      '從班表影像',
     )
     expect(await screen.findByRole('status')).toHaveTextContent(
       'API 已連線 · development',
@@ -100,7 +100,7 @@ describe('App', () => {
     )
     render(<App authGateway={null} />)
 
-    fireEvent.click(screen.getByRole('button', { name: '查看合成資料示範' }))
+    fireEvent.click(screen.getByRole('button', { name: '查看班表唯讀介面' }))
 
     expect(await screen.findByText(/8,000/)).toBeInTheDocument()
     expect(screen.getByText('22:00–06:00')).toBeInTheDocument()
@@ -162,7 +162,7 @@ describe('App', () => {
     render(<App authGateway={gateway} />)
 
     fireEvent.click(
-      await screen.findByRole('button', { name: '查看合成資料示範' }),
+      await screen.findByRole('button', { name: '查看班表唯讀介面' }),
     )
 
     expect(await screen.findByText(/8,000/)).toBeInTheDocument()
@@ -172,7 +172,7 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('opens the public reviewer route without signing in', async () => {
+  it('opens the public interactive demo without signing in', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({ status: 'ok', environment: 'production' }),
@@ -187,29 +187,31 @@ describe('App', () => {
     render(<App authGateway={gateway} />)
 
     fireEvent.click(
-      await screen.findByRole('button', { name: '開始 Reviewer 導覽' }),
+      await screen.findByRole('button', { name: '免登入體驗互動 Demo' }),
     )
 
-    expect(window.location.hash).toBe('#reviewer')
-    expect(screen.getByText('Reviewer Showcase')).toBeInTheDocument()
-    expect(screen.getByText('唯讀合成結果 · 無外部呼叫')).toBeInTheDocument()
+    expect(window.location.hash).toBe('#demo')
+    expect(screen.getByText('Interactive Demo')).toBeInTheDocument()
+    expect(
+      screen.getByText('2 分鐘自助體驗 · 唯讀合成資料'),
+    ).toBeInTheDocument()
     expect(signIn).not.toHaveBeenCalled()
     expect(fetchMock).toHaveBeenCalledOnce()
 
-    fireEvent.click(screen.getByRole('button', { name: '返回產品首頁' }))
+    fireEvent.click(screen.getByRole('button', { name: '返回首頁' }))
     expect(window.location.hash).toBe('')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      '你的班表，清楚而安心。',
+      '從班表影像',
     )
   })
 
-  it('supports a direct reviewer hash deep-link', () => {
-    window.history.replaceState(null, '', '/#reviewer')
+  it('supports a direct demo hash deep-link', () => {
+    window.history.replaceState(null, '', '/#demo')
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
 
     render(<App authGateway={null} />)
 
-    expect(screen.getByText('Reviewer Showcase')).toBeInTheDocument()
+    expect(screen.getByText('Interactive Demo')).toBeInTheDocument()
     expect(screen.queryByLabelText('電子郵件')).not.toBeInTheDocument()
   })
 

@@ -17,5 +17,5 @@ terse questions intentionally expose the deterministic router's fallback
 boundary. Ambiguous questions may use the bounded LLM classifier at runtime,
 but the offline report does not claim fallback-model accuracy.
 
-Use `python evals/run.py` from the repository root to rebuild the versioned M10
+Use `python evals/run.py` from the repository root to rebuild the versioned
 reports, or `python evals/run.py --check` to fail when they are stale.

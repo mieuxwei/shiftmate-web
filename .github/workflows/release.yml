@@ -56,7 +56,7 @@ jobs:
           cache: pip
 
       - name: Validate release configuration
-        run: python scripts/validate_m11_config.py --environment
+        run: python scripts/validate_release_config.py --environment
 
       - name: Run production migrations
         run: |
@@ -132,4 +132,4 @@ jobs:
           fi
 
       - name: Verify deployed policy and smoke test
-        run: scripts/verify_m11_deployment.sh "$PROJECT_ID" "$REGION" "$SERVICE"
+        run: scripts/verify_deployment.sh "$PROJECT_ID" "$REGION" "$SERVICE"

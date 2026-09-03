@@ -5,7 +5,7 @@
 
 ## Context
 
-M7 needs optional Google Calendar synchronization without making Google an
+The application needs optional Google Calendar synchronization without making Google an
 authority for confirmed shifts. OAuth callback requests do not carry the
 Supabase bearer token, refresh tokens are long-lived secrets, and retries must
 not create duplicate events. The application must still work without Google

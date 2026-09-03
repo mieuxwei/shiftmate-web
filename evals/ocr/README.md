@@ -21,5 +21,5 @@ The report includes date/time exact match, missing/extra shift rates,
 schema-valid rate, and `needs_review` recall. Live model calls are deliberately
 not part of the default gate, so tests remain free, repeatable, and safe.
 
-Use `python evals/run.py` from the repository root to rebuild the versioned M10
+Use `python evals/run.py` from the repository root to rebuild the versioned
 reports, or `python evals/run.py --check` to fail when they are stale.

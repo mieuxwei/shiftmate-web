@@ -35,8 +35,8 @@ connection allowance.
 
 RLS remains the final owner boundary even when repository queries omit explicit
 owner predicates. Pool capacity stays bounded, at the cost of possible request
-queuing under load. Supabase role creation and JWKS compatibility still require
-verification before M2 can be marked complete.
+queuing under load. Supabase role creation and JWKS compatibility must be
+verified for every target environment.
 
 ## References
 

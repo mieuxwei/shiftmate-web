@@ -5,7 +5,7 @@
 
 ## Context
 
-M5 needs LangChain-compatible semantic retrieval while preserving the existing
+The application needs LangChain-compatible semantic retrieval while preserving the existing
 `policy_documents` and `policy_chunks` schema, PostgreSQL row-level security,
 and transaction-scoped authenticated identity. Letting a generic vector-store
 integration create and own separate tables would duplicate the planned schema

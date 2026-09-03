@@ -2,14 +2,14 @@
 
 ShiftMate keeps language-model output outside the system of record. Identity,
 calculation, authorization, validation, and confirmed writes remain deterministic.
-The public Reviewer Showcase is an additional static path: it reads only versioned
+The public interactive demo is an additional static path: it reads only versioned
 synthetic fixtures bundled into the frontend.
 
 ## System architecture
 
 ```mermaid
 flowchart LR
-  Reviewer[Public reviewer] -->|/#reviewer| Fixture[Versioned synthetic fixtures]
+  Demo[Public interactive demo] -->|/#demo| Fixture[Versioned synthetic fixtures]
   User[Authenticated user] --> SPA[React + TypeScript SPA]
   SPA -->|Bearer JWT| API[FastAPI application]
   Client[MCP client] -->|Bearer JWT| MCP[Stateless read-only MCP]
@@ -29,7 +29,7 @@ flowchart LR
 
 Key boundaries:
 
-- The reviewer route never signs in, fetches production data, calls Gemini or
+- The demo route never signs in, fetches production data, calls Gemini or
   Calendar, or exposes a write control.
 - FastAPI verifies Supabase identity; PostgreSQL RLS derives the owner from the
   request transaction. Ordinary traffic does not use a service-role key.

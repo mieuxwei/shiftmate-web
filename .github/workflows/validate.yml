@@ -27,7 +27,7 @@ jobs:
           --health-retries 15
     env:
       DATABASE_URL: postgresql+psycopg://postgres:${{ github.run_id }}@localhost:5432/shiftmate_test
-      M2_TEST_DATABASE_URL: postgresql+psycopg://postgres:${{ github.run_id }}@localhost:5432/shiftmate_test
+      TEST_DATABASE_URL: postgresql+psycopg://postgres:${{ github.run_id }}@localhost:5432/shiftmate_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -39,8 +39,8 @@ jobs:
       - run: ruff check .
       - run: mypy
       - run: python evals/run.py --check
-      - run: python scripts/validate_m9_config.py
-      - run: python scripts/validate_m11_config.py
+      - run: python scripts/validate_runtime_policy.py
+      - run: python scripts/validate_release_config.py
       - run: pytest --cov=backend.app --cov-report=term-missing
 
   frontend:

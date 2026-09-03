@@ -1,4 +1,4 @@
-"""Add the remaining M2 schema and pgvector.
+"""Add the remaining application schema and pgvector.
 
 Revision ID: 20260902_0002
 Revises: 20260902_0001

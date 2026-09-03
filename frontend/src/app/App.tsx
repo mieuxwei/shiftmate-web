@@ -30,8 +30,9 @@ export function App({
   authGateway = configuredAuthGateway,
   apiClientFactory = defaultApiClientFactory,
 }: AppProps) {
-  const [showReviewer, setShowReviewer] = useState(
-    () => window.location.hash === '#reviewer',
+  const [showPortfolioDemo, setShowPortfolioDemo] = useState(
+    () =>
+      window.location.hash === '#demo' || window.location.hash === '#reviewer',
   )
   const [connection, setConnection] = useState<ConnectionState>({
     kind: 'loading',
@@ -41,24 +42,27 @@ export function App({
   const [showDemo, setShowDemo] = useState(false)
 
   useEffect(() => {
-    const syncReviewerRoute = () =>
-      setShowReviewer(window.location.hash === '#reviewer')
-    window.addEventListener('hashchange', syncReviewerRoute)
-    return () => window.removeEventListener('hashchange', syncReviewerRoute)
+    const syncDemoRoute = () =>
+      setShowPortfolioDemo(
+        window.location.hash === '#demo' ||
+          window.location.hash === '#reviewer',
+      )
+    window.addEventListener('hashchange', syncDemoRoute)
+    return () => window.removeEventListener('hashchange', syncDemoRoute)
   }, [])
 
-  function openReviewer() {
-    window.location.hash = 'reviewer'
-    setShowReviewer(true)
+  function openPortfolioDemo() {
+    window.location.hash = 'demo'
+    setShowPortfolioDemo(true)
   }
 
-  function closeReviewer() {
+  function closePortfolioDemo() {
     window.history.replaceState(
       null,
       '',
       `${window.location.pathname}${window.location.search}`,
     )
-    setShowReviewer(false)
+    setShowPortfolioDemo(false)
   }
   const auth = useAuthSession(authGateway)
   const accessToken =
@@ -88,15 +92,16 @@ export function App({
     void auth.signIn(email.trim(), submittedPassword)
   }
 
-  if (showReviewer) return <ReviewerShowcase onExit={closeReviewer} />
+  if (showPortfolioDemo) return <ReviewerShowcase onExit={closePortfolioDemo} />
 
   return (
     <main>
       <section className="hero" aria-labelledby="page-title">
-        <p className="eyebrow">ShiftMate Web</p>
-        <h1 id="page-title">你的班表，清楚而安心。</h1>
+        <p className="eyebrow">ShiftMate · Interactive portfolio</p>
+        <h1 id="page-title">從班表影像，到可驗證的工時與規章答案。</h1>
         <p className="lede">
-          這是使用合成資料的開發展示環境。登入後可管理班表與費率，也可先開啟唯讀示範。
+          為輪班工作者設計的安全優先助理：AI
+          負責提出候選資料，確定性程式負責工時與薪資估算，人類保留最後確認權。
         </p>
 
         <div className={`status status--${connection.kind}`} role="status">
@@ -107,20 +112,47 @@ export function App({
           {connection.kind === 'error' && 'API 尚未連線'}
         </div>
         <div className="hero-actions">
-          <button className="hero-primary" onClick={openReviewer} type="button">
-            開始 Reviewer 導覽
+          <button
+            className="hero-primary"
+            onClick={openPortfolioDemo}
+            type="button"
+          >
+            免登入體驗互動 Demo
           </button>
-          <span>5 個合成案例 · 約 3 分鐘 · 不需登入</span>
+          <span>5 個步驟 · 約 2 分鐘 · 100% 合成資料</span>
         </div>
+        <ul className="hero-proof" aria-label="Demo 特點">
+          <li>Human-in-the-loop</li>
+          <li>失敗案例可見</li>
+          <li>桌機與手機皆可操作</li>
+        </ul>
+      </section>
+
+      <section className="preview" aria-label="核心產品流程">
+        <article>
+          <span>01 · Capture</span>
+          <h2>班表圖片轉成草稿</h2>
+          <p>模型只提出結構化候選資料；格式錯誤與不確定欄位會被攔下。</p>
+        </article>
+        <article>
+          <span>02 · Verify</span>
+          <h2>工時與預估薪資可重算</h2>
+          <p>跨夜、休息時間、時區與有效期費率都由 domain service 計算。</p>
+        </article>
+        <article>
+          <span>03 · Explain</span>
+          <h2>規章回答帶頁碼引用</h2>
+          <p>證據不足或版本衝突時明確拒答，不把模型輸出當成判定。</p>
+        </article>
       </section>
 
       <section className="auth" aria-labelledby="auth-title" aria-live="polite">
         <div>
-          <p className="auth__kicker">Secure session</p>
-          <h2 id="auth-title">登入工作區</h2>
+          <p className="auth__kicker">Optional live workspace</p>
+          <h2 id="auth-title">已有測試帳號？</h2>
           <p className="auth__copy">
-            瀏覽器只保留 Supabase 使用者
-            session；所有班表與薪資請求仍由後端驗證權限。
+            作品導覽完全不需登入。這裡只供已配置帳號驗證完整
+            CRUD、匯入與整合流程；所有資料請求仍由後端與 RLS 驗證權限。
           </p>
         </div>
 
@@ -135,7 +167,7 @@ export function App({
                 onClick={() => setShowDemo((value) => !value)}
                 type="button"
               >
-                {showDemo ? '關閉合成示範' : '查看合成資料示範'}
+                {showDemo ? '關閉班表介面' : '查看班表唯讀介面'}
               </button>
             </div>
           )}
@@ -177,7 +209,7 @@ export function App({
                 onClick={() => setShowDemo((value) => !value)}
                 type="button"
               >
-                {showDemo ? '關閉合成示範' : '查看合成資料示範'}
+                {showDemo ? '關閉班表介面' : '查看班表唯讀介面'}
               </button>
             </div>
           )}
@@ -220,24 +252,6 @@ export function App({
             />
           </div>
         )}
-
-      <section className="preview" aria-label="功能預覽">
-        <article>
-          <span>01</span>
-          <h2>班表</h2>
-          <p>集中檢視個人班次與工時。</p>
-        </article>
-        <article>
-          <span>02</span>
-          <h2>智慧匯入</h2>
-          <p>先檢查、再確認，不讓 AI 直接寫入。</p>
-        </article>
-        <article>
-          <span>03</span>
-          <h2>規章助理</h2>
-          <p>以引用來源回答合成政策問題。</p>
-        </article>
-      </section>
     </main>
   )
 }

@@ -1,4 +1,4 @@
-"""Build or verify every offline M10 evaluation report."""
+"""Build or verify every offline evaluation report."""
 
 import argparse
 import importlib.util
@@ -41,7 +41,7 @@ def build_reports() -> dict[str, dict[str, object]]:
 def render_summary(reports: dict[str, dict[str, object]]) -> str:
     failures = _json(ROOT / "failure_modes/cases.json")
     lines = [
-        "# M10 offline evaluation report",
+        "# Offline evaluation report",
         "",
         "Generated from versioned synthetic fixtures by `python evals/run.py`.",
         "No network, credential, database, paid platform, or live model is used.",

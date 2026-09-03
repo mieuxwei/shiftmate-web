@@ -1,6 +1,6 @@
 import type { AnalyticsSummary, DateRange, PayRate, Shift } from '../api/types'
 import type { WorkspaceClient } from '../features/workspace/Workspace'
-import fixtureJson from './m3-demo.json'
+import fixtureJson from './schedule-demo.json'
 
 type DemoFixture = {
   profile: { display_name: string; timezone: string; currency: string }

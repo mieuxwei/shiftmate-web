@@ -1,6 +1,7 @@
 # Production IAM design
 
-This is a design for M11, not an instruction to provision resources during M9.
+This document describes the production permission boundary; it is not an
+instruction to provision resources without reviewing the deployment guide.
 
 | Principal | Scope | Roles / permissions |
 | --- | --- | --- |

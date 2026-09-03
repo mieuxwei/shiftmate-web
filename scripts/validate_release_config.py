@@ -43,7 +43,7 @@ def validate_files() -> None:
         "GOOGLE_OAUTH_REDIRECT_URI=",
         "DATABASE_URL=runtime-database-url:latest",
         "alembic upgrade head",
-        "scripts/verify_m11_deployment.sh",
+        "scripts/verify_deployment.sh",
     )
     for token in required_workflow_tokens:
         assert token in workflow, f"release workflow is missing {token}"
@@ -53,7 +53,7 @@ def validate_files() -> None:
     assert "--vpc-connector" not in workflow
     assert "--gpu" not in workflow
 
-    verifier = (ROOT / "scripts/verify_m11_deployment.sh").read_text(encoding="utf-8")
+    verifier = (ROOT / "scripts/verify_deployment.sh").read_text(encoding="utf-8")
     assert '["autoscaling.knative.dev/minScale"] // "0"' in verifier
 
     dockerfile = DOCKERFILE.read_text(encoding="utf-8")
@@ -83,7 +83,7 @@ def main() -> None:
     validate_files()
     if args.environment:
         validate_environment()
-    print("M11 release configuration is valid")
+    print("Release configuration is valid")
 
 
 if __name__ == "__main__":

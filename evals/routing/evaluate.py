@@ -1,4 +1,4 @@
-"""Offline deterministic metrics for the M6 intent router."""
+"""Offline deterministic metrics for the intent router."""
 
 import json
 import sys

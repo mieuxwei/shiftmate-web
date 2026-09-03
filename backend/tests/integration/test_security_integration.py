@@ -15,9 +15,9 @@ pytestmark = pytest.mark.integration
 
 @pytest.fixture(scope="module")
 def database_url() -> Iterator[str]:
-    url = os.environ.get("M2_TEST_DATABASE_URL")
+    url = os.environ.get("TEST_DATABASE_URL")
     if not url:
-        pytest.skip("M2_TEST_DATABASE_URL is not set")
+        pytest.skip("TEST_DATABASE_URL is not set")
     previous_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = url
     try:

@@ -39,4 +39,4 @@ job_count="$(gcloud scheduler jobs list --project="$project_id" \
 gcloud scheduler jobs describe daily-maintenance --project="$project_id" \
   --location="$region" --format='value(name)' | grep -q daily-maintenance
 
-echo "M11 deployed policy and smoke checks passed: $service_url"
+echo "Deployed policy and smoke checks passed: $service_url"

@@ -7,7 +7,7 @@ from typing import Any
 from backend.app.domain.analytics import calculate_schedule_summary
 from backend.app.domain.schedule import PayRate, Shift
 
-FIXTURE_PATH = Path("frontend/src/demo/m3-demo.json")
+FIXTURE_PATH = Path("frontend/src/demo/schedule-demo.json")
 
 
 def load_fixture() -> dict[str, Any]:
