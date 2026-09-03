@@ -99,7 +99,7 @@ jobs:
             --cpu-throttling \
             --no-cpu-boost \
             --execution-environment=gen2 \
-            --set-env-vars="^@^APP_ENV=production@APP_TIMEZONE=Asia/Taipei@SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}@SUPABASE_JWT_AUDIENCE=authenticated@DATABASE_REQUEST_ROLE=authenticated@DATABASE_POOL_SIZE=2@DATABASE_MAX_OVERFLOW=0@GEMINI_DAILY_REQUEST_CAP=50@UPLOAD_DAILY_CAP_PER_OWNER=10@API_RATE_LIMIT_PER_MINUTE=120@GOOGLE_OAUTH_CLIENT_ID=${{ vars.GOOGLE_OAUTH_CLIENT_ID }}@SCHEDULER_JOB_NAME=$SCHEDULER_JOB@SCHEDULER_SERVICE_ACCOUNT_EMAIL=$SCHEDULER_SERVICE_ACCOUNT" \
+            --set-env-vars="^~^APP_ENV=production~APP_TIMEZONE=Asia/Taipei~SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}~SUPABASE_JWT_AUDIENCE=authenticated~DATABASE_REQUEST_ROLE=authenticated~DATABASE_POOL_SIZE=2~DATABASE_MAX_OVERFLOW=0~GEMINI_DAILY_REQUEST_CAP=50~UPLOAD_DAILY_CAP_PER_OWNER=10~API_RATE_LIMIT_PER_MINUTE=120~GOOGLE_OAUTH_CLIENT_ID=${{ vars.GOOGLE_OAUTH_CLIENT_ID }}~SCHEDULER_JOB_NAME=$SCHEDULER_JOB~SCHEDULER_SERVICE_ACCOUNT_EMAIL=$SCHEDULER_SERVICE_ACCOUNT" \
             --set-secrets="DATABASE_URL=runtime-database-url:latest,GEMINI_API_KEY=gemini-api-key:latest,GOOGLE_OAUTH_CLIENT_SECRET=google-oauth-client-secret:latest,GOOGLE_OAUTH_STATE_SECRET=google-oauth-state-secret:latest,CALENDAR_TOKEN_ENCRYPTION_KEY=calendar-token-encryption-key:latest" \
             --quiet
 
@@ -110,7 +110,7 @@ jobs:
           gcloud run services update "$SERVICE" \
             --project="$PROJECT_ID" \
             --region="$REGION" \
-            --update-env-vars="^@^MCP_ALLOWED_HOSTS=[\"$service_host\"]@MCP_ALLOWED_ORIGINS=[\"$service_url\"]@SCHEDULER_OIDC_AUDIENCE=$service_url@GOOGLE_OAUTH_REDIRECT_URI=$service_url/api/v1/calendar/callback" \
+            --update-env-vars="^~^MCP_ALLOWED_HOSTS=[\"$service_host\"]~MCP_ALLOWED_ORIGINS=[\"$service_url\"]~SCHEDULER_OIDC_AUDIENCE=$service_url~GOOGLE_OAUTH_REDIRECT_URI=$service_url/api/v1/calendar/callback" \
             --quiet
           echo "SERVICE_URL=$service_url" >> "$GITHUB_ENV"
 
