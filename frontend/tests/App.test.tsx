@@ -52,6 +52,7 @@ describe('App', () => {
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+    window.history.replaceState(null, '', '/')
   })
 
   it('shows the connected API environment', async () => {
@@ -169,6 +170,47 @@ describe('App', () => {
     expect(
       screen.queryByRole('button', { name: '新增班次' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('opens the public reviewer route without signing in', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ status: 'ok', environment: 'production' }),
+        {
+          status: 200,
+        },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const { gateway, signIn } = signedOutGateway()
+
+    render(<App authGateway={gateway} />)
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: '開始 Reviewer 導覽' }),
+    )
+
+    expect(window.location.hash).toBe('#reviewer')
+    expect(screen.getByText('Reviewer Showcase')).toBeInTheDocument()
+    expect(screen.getByText('唯讀合成結果 · 無外部呼叫')).toBeInTheDocument()
+    expect(signIn).not.toHaveBeenCalled()
+    expect(fetchMock).toHaveBeenCalledOnce()
+
+    fireEvent.click(screen.getByRole('button', { name: '返回產品首頁' }))
+    expect(window.location.hash).toBe('')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      '你的班表，清楚而安心。',
+    )
+  })
+
+  it('supports a direct reviewer hash deep-link', () => {
+    window.history.replaceState(null, '', '/#reviewer')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+
+    render(<App authGateway={null} />)
+
+    expect(screen.getByText('Reviewer Showcase')).toBeInTheDocument()
+    expect(screen.queryByLabelText('電子郵件')).not.toBeInTheDocument()
   })
 
   it('shows an existing session and signs out safely', async () => {

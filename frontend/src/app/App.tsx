@@ -5,6 +5,7 @@ import { getHealth, type HealthStatus } from '../api/health'
 import { configuredAuthGateway, type AuthGateway } from '../auth/session'
 import { useAuthSession } from '../auth/useAuthSession'
 import { syntheticDemoClient } from '../demo/syntheticDemo'
+import { ReviewerShowcase } from '../features/reviewer/ReviewerShowcase'
 import {
   Workspace,
   type WorkspaceClient,
@@ -29,12 +30,36 @@ export function App({
   authGateway = configuredAuthGateway,
   apiClientFactory = defaultApiClientFactory,
 }: AppProps) {
+  const [showReviewer, setShowReviewer] = useState(
+    () => window.location.hash === '#reviewer',
+  )
   const [connection, setConnection] = useState<ConnectionState>({
     kind: 'loading',
   })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showDemo, setShowDemo] = useState(false)
+
+  useEffect(() => {
+    const syncReviewerRoute = () =>
+      setShowReviewer(window.location.hash === '#reviewer')
+    window.addEventListener('hashchange', syncReviewerRoute)
+    return () => window.removeEventListener('hashchange', syncReviewerRoute)
+  }, [])
+
+  function openReviewer() {
+    window.location.hash = 'reviewer'
+    setShowReviewer(true)
+  }
+
+  function closeReviewer() {
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${window.location.search}`,
+    )
+    setShowReviewer(false)
+  }
   const auth = useAuthSession(authGateway)
   const accessToken =
     auth.state.kind === 'signed-in' ? auth.state.session.accessToken : null
@@ -63,6 +88,8 @@ export function App({
     void auth.signIn(email.trim(), submittedPassword)
   }
 
+  if (showReviewer) return <ReviewerShowcase onExit={closeReviewer} />
+
   return (
     <main>
       <section className="hero" aria-labelledby="page-title">
@@ -78,6 +105,12 @@ export function App({
           {connection.kind === 'ready' &&
             `API 已連線 · ${connection.health.environment}`}
           {connection.kind === 'error' && 'API 尚未連線'}
+        </div>
+        <div className="hero-actions">
+          <button className="hero-primary" onClick={openReviewer} type="button">
+            開始 Reviewer 導覽
+          </button>
+          <span>5 個合成案例 · 約 3 分鐘 · 不需登入</span>
         </div>
       </section>
 

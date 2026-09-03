@@ -1,5 +1,54 @@
 # Verification log
 
+## 2026-09-03 — M12 portfolio release candidate gate
+
+- Added a public dark `/#reviewer` route and primary homepage CTA while keeping
+  the bright synthetic product demo. Five versioned local fixture cases cover
+  deterministic schedule/pay results, Gemini import review, grounded RAG and
+  refusal, LangGraph route/tool state, and the Calendar/MCP/RLS/WIF/Cloud Run
+  evidence chain. No case authenticates, fetches, writes, or calls an external
+  service.
+- Frontend tests cover hash deep-linking, all five cases, direct progress
+  navigation, previous/next/replay/exit, zero network calls, and absence of
+  production write controls. In the isolated official frontend build stage,
+  Prettier, ESLint, strict TypeScript, production build, and all 43 tests across
+  12 files passed. The build contains 78 modules and 454.40 kB JavaScript
+  (129.09 kB gzip).
+- Browser QA on the production container verified the first and fifth Reviewer
+  cases, labelled navigation, live progress, trace/evidence links, and no write
+  control. Earlier 390×844 QA reported no horizontal overflow. Health returned
+  production `ok`, OpenAPI reported version `1.0.0`, and both the SPA and Swagger
+  UI were served.
+- README now explains the problem, architecture, three-minute review, tests,
+  observed failures, repository proof, and trade-offs without claiming legal,
+  payroll, HR, or production readiness. Added Mermaid system architecture, ERD,
+  and LangGraph diagrams; REST/MCP examples; a live demo script; five versioned
+  screenshots; and links to rollback/removal guidance.
+- Created a reproducible HyperFrames composition and visual identity. Local
+  Kokoro generated 147.073 seconds of Mandarin narration at speed 0.9 using
+  `zf_xiaobei`, the available same-language fallback because HyperFrames 0.8.25
+  does not expose requested `zf_xiaoxiao`. Traditional Chinese primary and
+  English secondary subtitle sources are versioned.
+- HyperFrames lint had zero errors; check sampled 69 transition/layout points,
+  motion had zero errors/warnings, and 48/48 text checks passed WCAG AA. The
+  versioned animation timing map covers five entrances/card reveals/fades and
+  the 150-second progress wipe. The final H.264/AAC MP4 is 1920×1080, 30 fps,
+  exactly 150 seconds, and 18,268,741 bytes (below 25 MB).
+- Ruff format passed 142 files and Ruff lint passed. In the repository test
+  image, strict mypy passed 69 source files, all 90 offline backend tests passed
+  with 77% application coverage, all 18 disposable PostgreSQL 17 + pgvector
+  migration/RLS/API tests passed, and all four offline evaluation reports were
+  fresh. Temporary test database and smoke containers were removed.
+- `docker build -t shiftmate-web:m12 .` passed. Secret-pattern inspection found
+  only expected configuration references, typed variables, and explicit
+  synthetic/placeholding values. No secret, private data, live Gemini/Calendar
+  call, paid service, production database read, or cloud mutation was used.
+
+This is the fully verified local release candidate, not the completed M12
+deployment gate. Commit, push, Cloud Run deployment, annotated `v1.0.0` tag,
+GitHub Release asset publication, deployed browser/smoke verification, and the
+final billing/Artifact Registry review await one explicit grouped approval.
+
 ## 2026-09-03 — M11 Cloud Run CI/CD deployment milestone gate
 
 - M11 implementation was committed as `a206a06`. Validate #13 passed and

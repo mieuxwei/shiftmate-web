@@ -29,7 +29,9 @@ async def test_openapi_contains_health_endpoint() -> None:
         response = await client.get("/openapi.json")
 
     assert response.status_code == 200
-    assert "/api/v1/health" in response.json()["paths"]
+    schema = response.json()
+    assert schema["info"]["version"] == "1.0.0"
+    assert "/api/v1/health" in schema["paths"]
 
 
 async def test_unknown_api_route_does_not_fall_back_to_frontend() -> None:

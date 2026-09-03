@@ -1,60 +1,104 @@
 # ShiftMate Web
 
-ShiftMate Web is a responsive portfolio application for managing personal
-shifts, estimating work hours and pay, importing synthetic schedules with an
-LLM-assisted review flow, and answering questions grounded in synthetic work
-policy documents.
+**A deterministic-first, LLM-assisted shift management portfolio project.**
 
-The project is being built from scratch as an independent repository. It does
-not contain or depend on the earlier `line-bot-calendar` project.
+[Live app](https://shiftmate-web-fucvnupudq-de.a.run.app/) ·
+[3-minute Reviewer Showcase](https://shiftmate-web-fucvnupudq-de.a.run.app/#reviewer) ·
+[2.5-minute video](https://github.com/mieuxwei/shiftmate-web/releases/download/v1.0.0/shiftmate-demo.mp4) ·
+[OpenAPI](https://shiftmate-web-fucvnupudq-de.a.run.app/docs) ·
+[Evaluation report](evals/reports/summary.md)
 
-## Current status
+ShiftMate explores a practical question: how can an AI assistant help with
+schedule images and policy questions without becoming the authority for hours,
+pay, identity, or confirmed writes? The answer is a deliberately narrow model
+boundary backed by typed services, PostgreSQL RLS, human confirmation, visible
+refusals, and reproducible offline evaluation.
 
-Milestones M1–M10 are complete. The application now includes the PostgreSQL/RLS
-foundation, authenticated shift and effective-dated pay-rate CRUD, deterministic
-hours/pay analytics, month/week schedules, dashboard charts, and a credential-free
-synthetic read-only demo, plus a secure Gemini-assisted schedule import flow
-with edit/review/explicit confirmation and idempotent commit, plus owner-scoped
-policy PDF indexing, grounded questions, refusals, and page citations, plus a
-stateless deterministic-first LangGraph assistant, optional idempotent Google
-Calendar sync, a zero-authorization ICS fallback, and six authenticated,
-owner-scoped read-only MCP tools over stdio and stateless Streamable HTTP. See
-[`docs/project-state.md`](docs/project-state.md) for the concise handoff and
-[`projectplan.md`](projectplan.md) for the complete execution specification.
+The application is an independent repository and does not contain, import, or
+depend on the earlier `line-bot-calendar` project.
 
-The versioned M10 evaluation suite rebuilds OCR, RAG, and deterministic routing
-reports entirely offline from synthetic fixtures. Reports show sample counts,
-metrics, observed failures, and limitations rather than only successful cases.
-Deterministic failure injection also covers Gemini, Supabase JWKS, and Google
-Calendar unavailability. See [`evals/reports/summary.md`](evals/reports/summary.md).
+## Review it in three minutes
 
-## Product boundaries
+Open the public **Reviewer Showcase**. It is a five-step, read-only tour built
+from versioned local fixtures: no login, production database query, Gemini or
+Calendar call, account creation, or write control is involved.
 
-- Use only synthetic or anonymized schedules, rates, policies, and screenshots.
-- Do not use the application for legal, HR, payroll, or employment decisions.
-- Keep secrets in local environment variables or platform secret stores.
-- Target an expected cloud cost of NT$0 and fail closed when free quotas end.
+1. Dashboard results: overnight shifts, work hours, effective-dated pay estimate.
+2. AI import: structured candidates, invalid-row warning, human-confirmed write.
+3. Policy RAG: page citation plus a visible low-confidence/conflict refusal.
+4. LangGraph assistant: route, tool trace, deterministic facts, grounded answer.
+5. System evidence: Calendar/ICS, MCP, RLS, WIF, Cloud Run, CI, and evaluation.
 
-## Planned stack
+The speaking notes are in [the demo script](docs/demo-script.md). The existing
+bright synthetic product demo remains available from the homepage.
 
-- React, TypeScript, and Vite
-- FastAPI and typed Python domain services
-- PostgreSQL, Supabase Auth, RLS, and pgvector
-- Gemini, LangChain, LangGraph, RAG, and read-only MCP tools
-- Docker, GitHub Actions, and a single Cloud Run service
+![ShiftMate reviewer video: deterministic results and safety boundary](docs/images/reviewer-video-01.png)
 
-## Development
+## What is implemented
 
-Requirements: Python 3.12, Node.js 24, pnpm 11.19, and Docker with Compose.
+- Responsive React/TypeScript schedules, charts, dashboard, pay-rate CRUD, and
+  deterministic hours/pay analytics with timezone and overnight-shift handling.
+- Gemini-assisted JPG/PNG/PDF schedule extraction into an owner-scoped draft;
+  schema validation, editing, and explicit row confirmation precede idempotent
+  writes.
+- Owner-scoped policy PDF indexing with LangChain, pgvector retrieval, bounded
+  grounded answers, document/page citations, and evidence-based refusals.
+- Stateless LangGraph routing across schedule, policy, hybrid, and unsupported
+  paths. LLMs cannot calculate pay, execute SQL, or write confirmed shifts.
+- Optional idempotent Google Calendar sync using the narrow
+  `calendar.events.owned` scope, encrypted refresh tokens, and an ICS fallback.
+- Six authenticated, owner-scoped, read-only MCP tools over stdio and stateless
+  Streamable HTTP.
+- FastAPI, PostgreSQL forced RLS, Docker, GitHub Actions, branch-restricted WIF,
+  bounded Cloud Run, authenticated Cloud Scheduler, quotas, and safe logging.
 
-On macOS, if Docker Desktop is running but `docker` is not yet on your shell
-PATH, run this once in the current terminal:
+See the [architecture, ERD, and LangGraph diagrams](docs/architecture.md) for the
+complete boundary map.
 
-```bash
-export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
-```
+## Evidence, including failures
 
-Install the local dependencies:
+Every named portfolio technology maps to repository evidence rather than a
+screenshot-only claim.
+
+| Capability | Repository evidence |
+| --- | --- |
+| React + TypeScript | `frontend/src`, responsive tests, Vitest, ESLint, TypeScript build |
+| FastAPI + OpenAPI | `backend/app/api`, typed schemas, `/docs`, backend tests |
+| PostgreSQL + SQL + pgvector + RLS | `migrations`, integration tests, policy retrieval services |
+| Gemini + LangChain + RAG | versioned prompts/adapters, policy services, offline fixtures |
+| LangGraph | deterministic-first graph and routing tests in `backend/app/services/assistant.py` |
+| MCP | six typed read-only tools, two transports, auth/RLS parity tests, [usage guide](docs/mcp.md) |
+| Calendar | PKCE OAuth, encrypted token storage, idempotent sync, ICS fallback tests |
+| Docker + GitHub Actions | multi-stage image, Compose, validate/release workflows |
+| Cloud Run + Scheduler + WIF | versioned deployment policies, smoke scripts, [operations guide](docs/deployment.md) |
+
+The offline suite intentionally keeps observed misses visible:
+
+- OCR: 9 synthetic cases, 3 failed cases; date exact match 0.889, time exact
+  match 0.778, review recall 0.80.
+- RAG: 5 synthetic cases, 1 failed conflict case; Recall@k 0.90, citation
+  correctness 1.00, groundedness 0.80, refusal accuracy 0.80.
+- Routing: 12 synthetic questions, 2 conservative ambiguous fallbacks; accuracy
+  0.833.
+
+These small synthetic fixtures are reproducible directional evidence, not a
+production benchmark or traffic telemetry. The [full generated report](evals/reports/summary.md)
+lists every failure, limitation, and deterministic provider-failure test.
+
+## API and integrations
+
+OpenAPI is served by the deployed application. Safe REST and MCP examples are
+in [OpenAPI and MCP examples](docs/api-examples.md); the complete MCP transport
+and Inspector guide is in [docs/mcp.md](docs/mcp.md).
+
+Gemini and Google Calendar are optional. Without their configuration, the
+system fails closed with bounded states; existing confirmed shifts remain
+unchanged, and ICS export remains available. Upload only synthetic or
+anonymized schedules and policies.
+
+## Run locally
+
+Requirements: Python 3.12, Node.js 24, pnpm 11.19, and Docker.
 
 ```bash
 python3.12 -m venv .venv
@@ -62,98 +106,57 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 corepack enable
 pnpm --dir frontend install --frozen-lockfile
-```
-
-Run the API and Vite frontend in separate terminals:
-
-```bash
-source .venv/bin/activate
-uvicorn backend.app.main:app --reload
-```
-
-```bash
-pnpm --dir frontend dev
-```
-
-Open `http://localhost:5173`. The Vite server proxies `/api` to FastAPI on port
-8000. No external credentials are needed for the documented read-only demo:
-select **查看合成資料示範** on the landing page. To use authenticated CRUD,
-configure the public `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` values;
-never expose a service-role key to Vite.
-
-Schedule import accepts JPG, PNG, and PDF files up to 5 MB (PDFs up to 40 pages).
-It is disabled with the safe `GEMINI_NOT_CONFIGURED` response until
-`GEMINI_API_KEY` is set in a local secret store; the default model is
-`gemini-2.5-flash`. Upload only synthetic or anonymized schedules. The browser
-keeps the source preview locally, the server regenerates its stored filename,
-and request-scoped temporary files are deleted after extraction.
-
-Policy RAG accepts PDF files under the same 5 MB and 40-page limits. It extracts
-and chunks text per page, stores normalized 768-dimensional Gemini embeddings in
-owner-isolated pgvector rows, and refuses questions when retrieval does not meet
-the configured score threshold. The upload form and API require confirmation
-that the PDF contains only synthetic or anonymized data; do not upload private
-schedules, payroll records, or internal policy documents to Gemini Free Tier.
-Answers include citations assembled from stored document/chunk/page metadata,
-not identifiers generated by the model. Set `GEMINI_API_KEY` only in a local or
-platform secret store; listing and deleting existing documents do not require a
-Gemini call.
-
-Google Calendar is optional. Configure the four `GOOGLE_OAUTH_*` values and the
-`CALENDAR_TOKEN_ENCRYPTION_KEY` documented in `.env.example` to enable
-the authorization-code + PKCE flow. The app requests offline incremental access
-only to events on calendars the user owns, encrypts refresh tokens at rest, and
-uses stable external event IDs so retries do not duplicate events. Never commit
-OAuth credentials or token encryption secrets. Without Google configuration,
-authenticated users can still download owner-scoped `.ics` files for the visible
-date range; Calendar failures never modify confirmed shifts.
-
-The read-only MCP server reuses the REST application services for shifts,
-deterministic work hours and estimated pay, owner-scoped policy search,
-schedule-compliance analysis, and in-memory ICS export. It supports an
-authenticated stdio entrypoint (`shiftmate-mcp`) and a bearer-protected,
-stateless endpoint at `/mcp/`. Setup, Inspector, and safe client-demo commands
-are in [`docs/mcp.md`](docs/mcp.md).
-
-For the single-container production-like workflow, run:
-
-```bash
 docker compose up --build
 curl --fail http://localhost:8000/api/v1/health
 ```
 
-The built React UI and API are then both available from `http://localhost:8000`.
-To run both hot-reload-oriented Compose services instead, use
-`docker compose --profile dev up --build` and open port 5173.
+Open <http://localhost:8000>. The public reviewer and synthetic demo need no
+credential. Authenticated CRUD requires the public Supabase URL and anonymous
+key; never expose a service-role key to Vite. All supported configuration names
+are documented in `.env.example`.
 
-Run the application checks with:
+Run the principal gates:
 
 ```bash
 ruff format --check .
 ruff check .
 mypy
 pytest --cov=backend.app --cov-report=term-missing
-python evals/rag/evaluate.py
 python evals/run.py --check
 pnpm --dir frontend format
 pnpm --dir frontend lint
 pnpm --dir frontend typecheck
 pnpm --dir frontend test
 pnpm --dir frontend build
-docker build -t shiftmate-web:m1 .
+docker build -t shiftmate-web:local .
 ```
 
-For the disposable M2 PostgreSQL integration checks:
+Disposable PostgreSQL integration commands are documented in
+[`AGENTS.md`](AGENTS.md). Production resource inventory, migrations, deployed
+verification, rollback, emergency stop, and exact removal order are in
+[docs/deployment.md](docs/deployment.md).
 
-```bash
-docker compose --profile m2 up -d db
-export M2_TEST_DATABASE_URL="postgresql+psycopg://postgres:shiftmate_local_only@localhost:5432/shiftmate_test"
-pytest -m integration
-docker compose --profile m2 down
-```
+## Boundaries and trade-offs
 
-Configuration names are documented in `.env.example`; never commit `.env` or
-real credentials.
+- This is a portfolio demonstration, not a production HR, payroll, legal, or
+  employment-decision system. Pay is explicitly an estimate.
+- All public examples, screenshots, fixtures, narration, and evaluation inputs
+  are synthetic. Never send private schedules, payroll records, or internal
+  policy documents to Gemini Free Tier.
+- Model output is probabilistic. Import candidates require validation and human
+  confirmation; RAG refuses low-relevance or conflicting evidence.
+- Process-local rate limiting is intentional for the configured maximum of one
+  Cloud Run instance; horizontal scaling would require a shared limiter.
+- The deployed target is designed for expected NT$0 operation, not an absolute
+  billing guarantee. Cloud Run scales from zero to at most one instance, quotas
+  fail closed, retention is bounded, and spending alerts are not instantaneous
+  hard caps.
+- Supabase, Gemini, GitHub, and GCP free-tier policies can change. No paid plan,
+  add-on, voice service, or anonymous production write is required by the demo.
+
+Milestone state and verification history are in [docs/project-state.md](docs/project-state.md)
+and [docs/verification.md](docs/verification.md). The full implementation plan
+and acceptance gates are in [projectplan.md](projectplan.md).
 
 ## License
 

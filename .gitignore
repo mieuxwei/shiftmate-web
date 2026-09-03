@@ -27,6 +27,11 @@ coverage/
 .vite/
 .pnpm-store/
 
+# Reproducible portfolio-video outputs (published as GitHub Release assets)
+portfolio/video/assets/*.wav
+portfolio/video/snapshots/
+portfolio/video/*.mp4
+
 # Build and packaging
 *.egg-info/
 build/

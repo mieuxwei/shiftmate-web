@@ -1,0 +1,20 @@
+{
+  "composition": "main",
+  "durationSeconds": 150,
+  "fps": 30,
+  "progressWipe": { "start": 0, "end": 150 },
+  "scenes": [
+    { "id": "scene-1", "start": 0, "end": 25, "entrance": 0.15, "cards": 1, "fadeOut": 24.35 },
+    { "id": "scene-2", "start": 25, "end": 52, "entrance": 25.15, "cards": 26, "fadeOut": 51.35 },
+    { "id": "scene-3", "start": 52, "end": 82, "entrance": 52.15, "cards": 53, "fadeOut": 81.35 },
+    { "id": "scene-4", "start": 82, "end": 114, "entrance": 82.15, "cards": 83, "fadeOut": 113.35 },
+    { "id": "scene-5", "start": 114, "end": 150, "entrance": 114.15, "cards": 115, "fadeOut": 149.35 }
+  ],
+  "motion": {
+    "statementEntranceSeconds": 0.8,
+    "cardEntranceSeconds": 0.55,
+    "cardStaggerSeconds": 0.1,
+    "sceneFadeOutSeconds": 0.65,
+    "infiniteAnimation": false
+  }
+}

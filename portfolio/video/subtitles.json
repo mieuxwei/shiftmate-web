@@ -1,0 +1,32 @@
+[
+  {
+    "start": 0,
+    "end": 25,
+    "zh": "可信的排班，不只要顯示班次；工時、薪資估算與跨夜班都必須可驗證。",
+    "en": "Reliable schedules require verifiable hours, pay estimates, and overnight handling."
+  },
+  {
+    "start": 25,
+    "end": 52,
+    "zh": "Gemini 只提出候選資料；Schema 驗證與人工逐筆確認守住正式寫入。",
+    "en": "Gemini proposes candidates. Validation and explicit human review guard every confirmed write."
+  },
+  {
+    "start": 52,
+    "end": 82,
+    "zh": "RAG 提供頁碼引用，也會拒絕薄弱或衝突的證據；LangGraph 合併事實與規章。",
+    "en": "RAG cites pages and refuses weak evidence. LangGraph combines deterministic facts with policy."
+  },
+  {
+    "start": 82,
+    "end": 114,
+    "zh": "RLS、唯讀 MCP、Calendar 最小權限、ICS fallback、WIF 與受限 Cloud Run。",
+    "en": "RLS, read-only MCP, least-privilege Calendar, ICS fallback, WIF, and bounded Cloud Run."
+  },
+  {
+    "start": 114,
+    "end": 150,
+    "zh": "失敗案例保持可見；合成離線評估是方向性證據，不是正式人資或法律系統。",
+    "en": "Failures stay visible. Synthetic offline evaluations are evidence—not HR or legal readiness."
+  }
+]

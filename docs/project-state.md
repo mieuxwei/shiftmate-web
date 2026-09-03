@@ -5,8 +5,9 @@ Last updated: 2026-09-03
 ## Current position
 
 - Last completed milestone: **M11 — Cloud Run CI/CD deployment**
-- Active milestone: none; **M12 — Portfolio release** awaits explicit approval
-- Blockers: none for M11
+- Active milestone: **M12 — Portfolio release**
+- Blockers: explicit grouped approval for commit, push, deployment, tag, and
+  GitHub Release publication
 
 ## Completed
 
@@ -28,6 +29,30 @@ Last updated: 2026-09-03
   proxy workflow; pnpm dependencies use isolated named volumes.
 
 ## Latest milestone
+
+- M12 implementation and its local release-equivalent gate are complete. The
+  public frontend adds a dark five-step `/#reviewer` showcase backed only by
+  versioned local synthetic fixtures; it has no authentication, production
+  fetch, external call, account creation, or write control.
+- README now leads with the problem, three-minute review path, evidence map,
+  observed evaluation failures, trade-offs, privacy and free-tier limits.
+  Separate documents contain the system architecture, ERD, LangGraph flow,
+  OpenAPI/MCP examples, live demo script, deployment, rollback, and teardown.
+- The reproducible HyperFrames source uses a 1920×1080, 30 fps, 150-second dark
+  technical composition with Traditional Chinese and English subtitles. Local
+  Mandarin TTS produced 147.073 seconds of narration. HyperFrames check passed
+  69 layout/transition samples, motion checks, and 48/48 WCAG AA text checks.
+  The H.264/AAC release candidate is 18,268,741 bytes, below the 25 MB gate.
+- The full local gate passed in isolated Docker because the host workspace's
+  previously documented macOS File Provider issue stalled Vitest/Python workers:
+  43/43 frontend tests, Prettier, ESLint, TypeScript, production build, strict
+  mypy across 69 sources, 90 offline backend tests, 18 PostgreSQL/RLS integration
+  tests, and four fresh evaluation reports. The production image served health,
+  OpenAPI `1.0.0`, the SPA, and Swagger UI; browser QA traversed the reviewer.
+- Secret-pattern review found only configuration identifiers, typed variable
+  names, and clearly synthetic/placeholding test values. No private data, live
+  model request, paid platform, cloud mutation, or anonymous production write
+  was introduced.
 
 - M11 is complete for the dedicated `my-shiftmate-web-prod-95939` GCP project in
   `asia-east1`. The production application is available at
@@ -183,9 +208,12 @@ Last updated: 2026-09-03
 
 ## Next task packet
 
-Await explicit approval to start M12. The next packet should focus only on the
-portfolio release gate, public documentation, final security/cost review, and
-`v1.0.0`; stop before any payment or plan upgrade.
+Await one explicit grouped approval for the verified M12 release candidate.
+After approval: commit all M12 source and documentation, push `main`, wait for
+Validate and the existing Cloud Run Release workflow, verify the deployed
+homepage/Reviewer/OpenAPI/smoke and current free-cost controls, create annotated
+tag `v1.0.0`, and publish the 18.27 MB MP4 as the GitHub Release asset. Stop
+before any payment, plan upgrade, or new paid resource.
 
 ## Known risks
 
