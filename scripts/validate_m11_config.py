@@ -39,7 +39,8 @@ def validate_files() -> None:
         "--cpu-throttling",
         "--no-cpu-boost",
         '--set-env-vars="^~^',
-        '--update-env-vars="^~^',
+        "MCP_ALLOWED_HOSTS=",
+        "GOOGLE_OAUTH_REDIRECT_URI=",
         "DATABASE_URL=runtime-database-url:latest",
         "alembic upgrade head",
         "scripts/verify_m11_deployment.sh",
@@ -48,7 +49,7 @@ def validate_files() -> None:
         assert token in workflow, f"release workflow is missing {token}"
     assert "credentials_json" not in workflow
     assert '--set-env-vars="^@^' not in workflow
-    assert '--update-env-vars="^@^' not in workflow
+    assert "gcloud run services update" not in workflow
     assert "--vpc-connector" not in workflow
     assert "--gpu" not in workflow
 
