@@ -1,0 +1,140 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [Validate]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+      SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
+      SCHEDULER_SERVICE_ACCOUNT: ${{ vars.GCP_SCHEDULER_SERVICE_ACCOUNT }}
+      SCHEDULER_JOB: daily-maintenance
+      SOURCE_SHA: >-
+        ${{ github.event_name == 'workflow_run' &&
+            github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: >-
+            ${{ github.event_name == 'workflow_run' &&
+                github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Validate release configuration
+        run: python scripts/validate_m11_config.py --environment
+
+      - name: Run production migrations
+        run: |
+          pip install --disable-pip-version-check .
+          migration_url="$(gcloud secrets versions access latest \
+            --secret=migration-database-url --project="$PROJECT_ID")"
+          echo "::add-mask::$migration_url"
+          MIGRATION_DATABASE_URL="$migration_url" alembic upgrade head
+
+      - name: Build and push immutable image
+        run: |
+          image_sha="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shiftmate-web:$SOURCE_SHA"
+          image_production="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shiftmate-web:production"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build \
+            --build-arg "VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}" \
+            --build-arg "VITE_SUPABASE_ANON_KEY=${{ vars.VITE_SUPABASE_ANON_KEY }}" \
+            --tag "$image_sha" \
+            --tag "$image_production" \
+            .
+          docker push "$image_sha"
+          docker push "$image_production"
+
+      - name: Deploy production revision
+        run: |
+          image_sha="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/shiftmate-web:$SOURCE_SHA"
+          gcloud run deploy "$SERVICE" \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --image="$image_sha" \
+            --service-account="$RUNTIME_SERVICE_ACCOUNT" \
+            --allow-unauthenticated \
+            --port=8080 \
+            --cpu=1 \
+            --memory=512Mi \
+            --concurrency=4 \
+            --timeout=120 \
+            --min-instances=0 \
+            --max-instances=1 \
+            --cpu-throttling \
+            --no-cpu-boost \
+            --execution-environment=gen2 \
+            --set-env-vars="^@^APP_ENV=production@APP_TIMEZONE=Asia/Taipei@SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}@SUPABASE_JWT_AUDIENCE=authenticated@DATABASE_REQUEST_ROLE=authenticated@DATABASE_POOL_SIZE=2@DATABASE_MAX_OVERFLOW=0@GEMINI_DAILY_REQUEST_CAP=50@UPLOAD_DAILY_CAP_PER_OWNER=10@API_RATE_LIMIT_PER_MINUTE=120@GOOGLE_OAUTH_CLIENT_ID=${{ vars.GOOGLE_OAUTH_CLIENT_ID }}@SCHEDULER_JOB_NAME=$SCHEDULER_JOB@SCHEDULER_SERVICE_ACCOUNT_EMAIL=$SCHEDULER_SERVICE_ACCOUNT" \
+            --set-secrets="DATABASE_URL=runtime-database-url:latest,GEMINI_API_KEY=gemini-api-key:latest,GOOGLE_OAUTH_CLIENT_SECRET=google-oauth-client-secret:latest,GOOGLE_OAUTH_STATE_SECRET=google-oauth-state-secret:latest,CALENDAR_TOKEN_ENCRYPTION_KEY=calendar-token-encryption-key:latest" \
+            --quiet
+
+          service_url="$(gcloud run services describe "$SERVICE" \
+            --project="$PROJECT_ID" --region="$REGION" \
+            --format='value(status.url)')"
+          service_host="${service_url#https://}"
+          gcloud run services update "$SERVICE" \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --update-env-vars="^@^MCP_ALLOWED_HOSTS=[\"$service_host\"]@MCP_ALLOWED_ORIGINS=[\"$service_url\"]@SCHEDULER_OIDC_AUDIENCE=$service_url@GOOGLE_OAUTH_REDIRECT_URI=$service_url/api/v1/calendar/callback" \
+            --quiet
+          echo "SERVICE_URL=$service_url" >> "$GITHUB_ENV"
+
+      - name: Reconcile daily maintenance scheduler
+        run: |
+          scheduler_args=(
+            --project="$PROJECT_ID"
+            --location="$REGION"
+            --schedule="15 3 * * *"
+            --time-zone="Asia/Taipei"
+            --uri="$SERVICE_URL/api/v1/internal/daily-maintenance"
+            --http-method=POST
+            --oidc-service-account-email="$SCHEDULER_SERVICE_ACCOUNT"
+            --oidc-token-audience="$SERVICE_URL"
+            --max-retry-duration=3600s
+            --max-doublings=3
+            --quiet
+          )
+          if gcloud scheduler jobs describe "$SCHEDULER_JOB" \
+            --project="$PROJECT_ID" --location="$REGION" >/dev/null 2>&1; then
+            gcloud scheduler jobs update http "$SCHEDULER_JOB" "${scheduler_args[@]}"
+          else
+            gcloud scheduler jobs create http "$SCHEDULER_JOB" "${scheduler_args[@]}"
+          fi
+
+      - name: Verify deployed policy and smoke test
+        run: scripts/verify_m11_deployment.sh "$PROJECT_ID" "$REGION" "$SERVICE"

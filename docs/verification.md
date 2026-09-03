@@ -1,5 +1,71 @@
 # Verification log
 
+## 2026-09-03 — M11 deployment workflow and bootstrap slice
+
+- Created the exact non-secret production target for project
+  `my-shiftmate-web-prod-95939` in `asia-east1` and kept the full paid account
+  inactive.
+- Added a release workflow that can run only after successful `Validate` on a
+  `main` push or an explicit `main` dispatch. It checks out the validated SHA,
+  uses WIF without JSON keys, applies migrations, pushes an immutable image,
+  deploys the bounded Cloud Run configuration, reconciles one Scheduler job,
+  and runs production smoke checks.
+- Added build-time injection for the browser-visible Supabase URL and anon key;
+  no private value is embedded in the source or production image definition.
+- Added idempotent bootstrap, branch-restricted WIF, narrow service-account and
+  Scheduler roles, deployed-state verification, production migration guidance,
+  rollback, emergency-stop, and teardown dry-run documentation.
+- Enabled only the required deployment APIs. Created runtime, Scheduler, and
+  deployment service accounts; a same-region Artifact Registry repository with
+  scanning disabled and bounded cleanup; and an exact-branch GitHub WIF trust.
+  No user-managed or JSON service-account key was created.
+- Applied least-privilege bindings: exact-repository Artifact Registry writer,
+  a custom Scheduler deployer role, service usage, service-account impersonation,
+  and secret access separated between runtime and migrations.
+- Created six Secret Manager containers. Added one version each for the runtime
+  and migration database URLs plus distinct OAuth-state and Calendar-token
+  encryption values; Gemini and OAuth client-secret values remain absent.
+  Created a branch-restricted GitHub `production` environment with ten
+  non-secret variables; it contains no GitHub secret values.
+- Activated the Cloud Run NT$1 preview spend guardrail with 50%, 80%, and 100%
+  email notifications. This reduces accidental-spend exposure but is not an
+  instantaneous or absolute billing cap. The full paid account remains inactive.
+- Local verification passed: both deployment-policy validators, Bash syntax,
+  workflow YAML parsing, Ruff formatting/lint, strict mypy for 69 source files,
+  90 offline tests with 77% coverage, and four fresh offline evaluation reports.
+  Frontend Prettier, ESLint, TypeScript, 11 test files / 37 tests, and production
+  build passed from an identical temporary archive after the known macOS
+  file-provider worker stall.
+- `docker build -t shiftmate-web:m11 .` passed. The container returned
+  production `ok` from `/api/v1/health` and served the ShiftMate SPA, then the
+  temporary container was removed.
+- Created the first temporary Cloud Run hello revision. Read-only inspection
+  verified request-based CPU throttling, min 0, max 1, 1 CPU, 512 MiB,
+  concurrency 4, timeout 120 seconds, gen2, and disabled startup CPU boost.
+- Bound `roles/run.admin` for the deployer and `roles/run.invoker` for Scheduler
+  on this service only; project-wide Cloud Run administration was not granted.
+- From a disposable Cloud Shell checkout of the already verified `main`, ran
+  Alembic successfully from `20260902_0002` through `20260903_0006` using the
+  masked session-pooler migration URL. No database password was printed.
+- Granted and verified only the intended `shiftmate_maintenance` membership for
+  the non-owner runtime login after that role existed.
+- Configured Google Auth Platform as an external testing app with the approved
+  support/developer contact, exact Cloud Run origin, and exact Calendar callback.
+  No verification/publishing request was submitted.
+- The first Gemini API key and OAuth secret were exposed in provider creation
+  responses rendered into local automation diagnostics and were never stored
+  for production. A second AI Studio attempt also left an unused key despite a
+  visible provider error. Both exposed Gemini keys were permanently deleted.
+- Created and safely stored one clean OAuth replacement, then disabled and
+  permanently deleted its exposed predecessor. Created and safely stored one
+  clean Gemini replacement restricted only to
+  `generativelanguage.googleapis.com`; the active-key listing contains only
+  that replacement. Added the public OAuth client ID as the eleventh GitHub
+  production environment variable.
+- No Scheduler job, private schedule data, or live model call has been created
+  or used. The final application deploy now awaits explicit milestone
+  commit/push approval.
+
 Record commands and observable results here at milestone gates. Do not record
 secrets, tokens, private source data, or full model payloads.
 

@@ -1,0 +1,19 @@
+{
+  "projectId": "my-shiftmate-web-prod-95939",
+  "projectNumber": "409107495677",
+  "region": "asia-east1",
+  "githubRepository": "mieuxwei/shiftmate-web",
+  "artifactRepository": "shiftmate-web",
+  "cloudRunService": "shiftmate-web",
+  "runtimeServiceAccount": "shiftmate-runtime@my-shiftmate-web-prod-95939.iam.gserviceaccount.com",
+  "schedulerServiceAccount": "scheduler-invoker@my-shiftmate-web-prod-95939.iam.gserviceaccount.com",
+  "deployServiceAccount": "shiftmate-deploy@my-shiftmate-web-prod-95939.iam.gserviceaccount.com",
+  "workloadIdentityPool": "github",
+  "workloadIdentityProvider": "shiftmate-web",
+  "schedulerJob": "daily-maintenance",
+  "billing": "request-based",
+  "minInstances": 0,
+  "maxInstances": 1,
+  "gpu": false,
+  "vpcConnector": null
+}

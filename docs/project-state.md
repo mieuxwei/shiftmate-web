@@ -5,8 +5,9 @@ Last updated: 2026-09-03
 ## Current position
 
 - Last completed milestone: **M10 — AI evaluation and reliability**
-- Active milestone: **None; M10 complete and pushed; CI repair verified locally**
-- Blockers: none
+- Active milestone: **M11 — Cloud Run CI/CD deployment**
+- Blockers: explicit M11 commit/push approval is required before the release
+  workflow can replace the temporary revision and complete the deployed gate
 
 ## Completed
 
@@ -28,6 +29,44 @@ Last updated: 2026-09-03
   proxy workflow; pnpm dependencies use isolated named volumes.
 
 ## Latest milestone
+
+- M11 is active for the dedicated `my-shiftmate-web-prod-95939` GCP project in
+  `asia-east1`. The project is linked to a Free Trial billing account; the
+  full paid account remains inactive.
+- The first M11 implementation slice adds a post-Validate release workflow,
+  immutable image deployment, production migrations, Scheduler reconciliation,
+  deployed-policy smoke checks, branch-restricted WIF bootstrap, exact
+  non-secret production identifiers, and rollback/teardown documentation.
+- The NT$1 Cloud Run spend guardrail is active with 50%, 80%, and 100% email
+  notifications. It is a preview enforcement control rather than an
+  instantaneous or absolute billing guarantee.
+- Required APIs, three narrowly scoped service accounts, the same-region
+  Artifact Registry repository and cleanup policy, and branch-restricted GitHub
+  WIF now exist. No service-account JSON key was created.
+- Four Secret Manager values now hold the separated runtime/session-pooler
+  database URLs and distinct OAuth-state/Calendar-token encryption material.
+  The Gemini and Google OAuth client-secret containers remain empty.
+- The first bounded Cloud Run service exists with a temporary public hello
+  revision. Its deployed configuration verifies request-based CPU throttling,
+  min 0, max 1, 1 CPU, 512 MiB, concurrency 4, timeout 120 seconds, gen2, and no
+  startup CPU boost. The deployer has service-only administration and the
+  Scheduler identity has service-only invocation; no Scheduler job exists yet.
+- Production Alembic migrations completed from revision `20260902_0002` through
+  `20260903_0006` over the IPv4-compatible session pooler. The runtime login is
+  non-owner/non-`BYPASSRLS` and verified as a member of only the intended
+  application roles, including the narrow maintenance role.
+- Google Auth Platform is configured as an external testing app with the
+  approved support/developer contact, exact Cloud Run JavaScript origin, and
+  exact Calendar callback. The clean OAuth replacement is stored in Secret
+  Manager and the exposed predecessor is permanently deleted.
+- Exactly one active Gemini replacement key remains, restricted to the
+  Generative Language API and stored in Secret Manager. Both exposed/unused
+  predecessors were permanently deleted. GitHub's production environment now
+  has all eleven non-secret variables, including the public OAuth client ID.
+- GitHub's `production` environment accepts only `main` and contains the ten
+  non-secret deployment variables. Local release validators, Ruff, mypy,
+  offline tests/evaluations, frontend quality/build gates, Docker build, health
+  check, and SPA smoke check pass.
 
 - M10 is complete: `python evals/run.py` rebuilds four versioned reports from
   synthetic fixtures, while `--check` makes stale reports fail locally and in
@@ -140,10 +179,10 @@ Last updated: 2026-09-03
 
 ## Next task packet
 
-After the verified CI repair is approved, committed, pushed, and green on
-GitHub Actions, begin M11 Cloud Run CI/CD deployment. M11 requires deployment
-choices, credentials, and checks that remain inside the NT$0 cost envelope;
-stop before any potentially paid resource or configuration.
+After explicit M11 commit/push approval, commit the verified milestone files and
+push `main`. Observe Validate and the dependent Release workflow, diagnose any
+failure, verify the application revision and Scheduler, then run the full
+deployed milestone gate. Stop before any payment or plan upgrade.
 
 ## Known risks
 

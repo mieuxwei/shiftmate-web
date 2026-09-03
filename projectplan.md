@@ -778,8 +778,8 @@ Milestone 只描述依賴、產物與 gate，不包含日期或完成天數。�
 | M7 | Google Calendar and ICS | M3 | COMPLETE |
 | M8 | MCP Server | M3, M5, M6 | COMPLETE |
 | M9 | Security, scheduling and cost controls | M4, M5, M7, M8 | COMPLETE |
-| M10 | AI evaluation and reliability | M4, M5, M6 | NOT_STARTED |
-| M11 | Cloud Run CI/CD deployment | M9, M10 | NOT_STARTED |
+| M10 | AI evaluation and reliability | M4, M5, M6 | COMPLETE |
+| M11 | Cloud Run CI/CD deployment | M9, M10 | IN_PROGRESS |
 | M12 | Portfolio release | M11 | NOT_STARTED |
 
 ### M0 — Repository boundary and Codex context

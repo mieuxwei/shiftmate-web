@@ -6,6 +6,10 @@ RUN corepack enable
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
+ARG VITE_SUPABASE_URL=""
+ARG VITE_SUPABASE_ANON_KEY=""
+ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL} \
+    VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
 RUN pnpm build
 
 FROM python:3.12-slim AS runtime
