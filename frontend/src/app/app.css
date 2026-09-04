@@ -1143,7 +1143,7 @@ h1 {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 1rem;
-  margin-top: clamp(1.5rem, 3vw, 2.5rem);
+  margin-top: 1rem;
   padding: 1rem 1.25rem;
   border: 1px solid rgb(143 190 160 / 20%);
   border-radius: 1rem;
@@ -1217,7 +1217,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.45rem;
-  margin-top: clamp(1.5rem, 3vw, 2.5rem);
+  margin-top: 1rem;
 }
 
 .reviewer-progress button {
@@ -1228,7 +1228,7 @@ h1 {
   border: 0;
   border-top: 2px solid rgb(242 240 232 / 15%);
   background: transparent;
-  color: #819087;
+  color: #b5c3bb;
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 800;
@@ -1247,16 +1247,16 @@ h1 {
 
 .reviewer-stage {
   display: grid;
-  grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.5fr);
-  gap: clamp(2rem, 5vw, 5rem);
-  min-height: 610px;
-  padding-block: clamp(2.5rem, 6vw, 5rem);
+  grid-template-columns: minmax(200px, 0.55fr) minmax(0, 1.8fr);
+  gap: 1.5rem;
+  min-height: 480px;
+  padding-block: 1.5rem;
 }
 
 .reviewer-intro h1 {
   max-width: 620px;
-  font-size: clamp(2.5rem, 5vw, 5.4rem);
-  line-height: 0.98;
+  font-size: clamp(1.65rem, 2.6vw, 2.6rem);
+  line-height: 1.25;
 }
 
 .reviewer-intro > p {
@@ -1291,8 +1291,8 @@ h1 {
 }
 
 .reviewer-evidence {
-  align-self: center;
-  animation: reviewer-enter 420ms ease-out both;
+  align-self: start;
+  min-width: 0;
 }
 
 @keyframes reviewer-enter {
@@ -1320,14 +1320,14 @@ h1 {
 
 .reviewer-metrics {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
 .reviewer-metrics article {
   display: grid;
-  min-height: 145px;
-  padding: 1.15rem;
+  min-height: 110px;
+  padding: 0.85rem;
 }
 
 .reviewer-metrics span,
@@ -1338,7 +1338,7 @@ h1 {
 .reviewer-metrics strong {
   align-self: end;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-size: clamp(1.5rem, 2.3vw, 2.2rem);
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }
@@ -1348,7 +1348,7 @@ h1 {
 .reviewer-refusal,
 .reviewer-tools,
 .reviewer-release {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: 1rem;
 }
 
 .reviewer-detail > strong {
@@ -1762,5 +1762,169 @@ h1 {
   .form-grid,
   .reviewer-metrics {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Presentation-only surfaces: keep operations readable and in normal flow. */
+.reviewer-shell a {
+  color: #b5ddc4;
+}
+.reviewer-shell :focus-visible {
+  outline: 3px solid #e4c779;
+  outline-offset: 4px;
+}
+.reviewer-shell h1:focus {
+  outline: none;
+}
+.reviewer-shell h1:focus-visible {
+  outline: 2px solid #e4c779;
+}
+.reviewer-detail h2 {
+  margin-top: 0.5rem;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+.reviewer-detail li {
+  margin-block: 0.5rem;
+  line-height: 1.65;
+}
+.reviewer-review-grid,
+.reviewer-policy-sources {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.reviewer-review-grid figure {
+  margin: 0;
+}
+.reviewer-review-grid img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.reviewer-review-grid figcaption {
+  color: #c4d0c9;
+  font-size: 0.8rem;
+  margin-top: 0.6rem;
+}
+.reviewer-draft {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.reviewer-draft li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.reviewer-review-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  padding-left: 1.5rem;
+  color: #c4d0c9;
+}
+.reviewer-review-states [aria-current='step'] {
+  color: #f4d58a;
+  font-weight: 800;
+  text-decoration: underline;
+}
+.reviewer-choice button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.reviewer-ledger {
+  border: 1px solid #537361;
+  border-radius: 1rem;
+  background: #1b2b22;
+  min-width: 0;
+}
+.reviewer-ledger summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.25rem 0;
+}
+.reviewer-table-scroll {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+.reviewer-ledger table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.reviewer-ledger caption {
+  text-align: left;
+  padding-bottom: 0.75rem;
+  color: #c4d0c9;
+}
+.reviewer-ledger th,
+.reviewer-ledger td {
+  padding: 0.65rem 0.5rem;
+  border-bottom: 1px solid #537361;
+  text-align: left;
+}
+.reviewer-ledger tfoot {
+  font-weight: 800;
+}
+.reviewer-controls {
+  padding-bottom: 1rem;
+  gap: 1rem;
+}
+.hero-actions a {
+  font-weight: 800;
+  color: #244e39;
+}
+@media (max-width: 700px) {
+  .reviewer-shell {
+    padding: 1rem;
+  }
+  .reviewer-header {
+    flex-direction: row;
+    align-items: center;
+  }
+  .reviewer-header button {
+    padding: 0.65rem 0.8rem;
+  }
+  .reviewer-stage {
+    gap: 0.8rem;
+    padding-block: 0.75rem;
+  }
+  .reviewer-intro h1 {
+    margin-block: 0.4rem;
+  }
+  .reviewer-intro > p {
+    margin-block: 0.5rem;
+    line-height: 1.5;
+  }
+  .reviewer-review-grid,
+  .reviewer-policy-sources {
+    grid-template-columns: 1fr;
+  }
+  .reviewer-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reviewer-metrics strong {
+    font-size: 1.8rem;
+  }
+  .reviewer-progress {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .reviewer-progress button {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    padding: 0.5rem 0.15rem;
+    font-size: 0.75rem;
+    min-height: 48px;
+  }
+  .reviewer-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .reviewer-choice--row {
+    flex-wrap: wrap;
   }
 }

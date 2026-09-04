@@ -104,22 +104,16 @@ export function App({
           負責提出候選資料，確定性程式負責工時與薪資估算，人類保留最後確認權。
         </p>
 
-        <div className={`status status--${connection.kind}`} role="status">
-          <span className="status__dot" aria-hidden="true" />
-          {connection.kind === 'loading' && '正在連接 API…'}
-          {connection.kind === 'ready' &&
-            `API 已連線 · ${connection.health.environment}`}
-          {connection.kind === 'error' && 'API 尚未連線'}
-        </div>
         <div className="hero-actions">
           <button
             className="hero-primary"
             onClick={openPortfolioDemo}
             type="button"
           >
-            免登入體驗互動 Demo
+            開始體驗
           </button>
-          <span>5 個步驟 · 約 2 分鐘 · 100% 合成資料</span>
+          <a href="https://github.com/mieuxwei/shiftmate-web">查看 GitHub</a>
+          <span>5 個步驟 · 約 2 分鐘 · 100% 合成資料 · 不需 API 連線</span>
         </div>
         <ul className="hero-proof" aria-label="Demo 特點">
           <li>Human-in-the-loop</li>
@@ -150,6 +144,13 @@ export function App({
         <div>
           <p className="auth__kicker">Optional live workspace</p>
           <h2 id="auth-title">已有測試帳號？</h2>
+          <div className={`status status--${connection.kind}`} role="status">
+            <span className="status__dot" aria-hidden="true" />
+            {connection.kind === 'loading' && '正在連接 API…'}
+            {connection.kind === 'ready' &&
+              `API 已連線 · ${connection.health.environment}`}
+            {connection.kind === 'error' && 'API 尚未連線'}
+          </div>
           <p className="auth__copy">
             作品導覽完全不需登入。這裡只供已配置帳號驗證完整
             CRUD、匯入與整合流程；所有資料請求仍由後端與 RLS 驗證權限。

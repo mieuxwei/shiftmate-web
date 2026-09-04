@@ -186,9 +186,7 @@ describe('App', () => {
 
     render(<App authGateway={gateway} />)
 
-    fireEvent.click(
-      await screen.findByRole('button', { name: '免登入體驗互動 Demo' }),
-    )
+    fireEvent.click(await screen.findByRole('button', { name: '開始體驗' }))
 
     expect(window.location.hash).toBe('#demo')
     expect(screen.getByText('Interactive Demo')).toBeInTheDocument()
@@ -205,8 +203,8 @@ describe('App', () => {
     )
   })
 
-  it('supports a direct demo hash deep-link', () => {
-    window.history.replaceState(null, '', '/#demo')
+  it.each(['#demo', '#reviewer'])('supports a direct %s deep-link', (hash) => {
+    window.history.replaceState(null, '', '/' + hash)
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
 
     render(<App authGateway={null} />)

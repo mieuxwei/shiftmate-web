@@ -1,75 +1,74 @@
-import { type ReactNode, useState } from 'react'
-
-import { reviewerLinks, reviewerShowcase } from '../../demo/reviewerShowcase'
-
-type ReviewerShowcaseProps = {
-  onExit: () => void
-}
+import { useEffect, useRef, useState } from 'react'
+import {
+  demoShifts,
+  demoTotals,
+  money,
+  policySources,
+  repoFile,
+  reviewerLinks,
+  scheduleImage,
+} from '../../demo/reviewerShowcase'
 
 const steps = [
   {
-    number: '01',
     short: '結果',
-    title: '先確認班表與收入是否正確',
-    story: 'Mia 想快速核對跨夜班、休息時間與這個月的預估收入。',
-    outcome: '一眼看懂 6 筆班次、40 小時與 NT$8,000 預估薪資。',
-    proof: '時區、跨日與費率都能由相同輸入重算。',
+    title: '班表與收入 / Results',
+    hint: '從六筆班次重算工時與預估收入。',
   },
   {
-    number: '02',
     short: 'AI 覆核',
-    title: 'AI 提案，人類確認',
-    story: 'Mia 上傳合成班表後，先處理一筆結束時間不清楚的候選資料。',
-    outcome: '修正前不能確認，修正後才進入可寫入狀態。',
-    proof: 'Schema validation、草稿與逐筆確認分開。',
+    title: 'AI 提案，人類確認 / Review',
+    hint: '比對合成圖片，先補正，再模擬人工確認。',
   },
   {
-    number: '03',
     short: '規章',
-    title: '答案必須能回到原文',
-    story: 'Mia 查詢連續工作限制，也測試文件版本互相衝突時的結果。',
-    outcome: '可回答時顯示文件與頁碼；衝突時明確拒答。',
-    proof: '檢索證據是回答條件，不是裝飾性附件。',
+    title: '答案回到原文 / Policy',
+    hint: '切換有效版本與衝突版本，檢查回答依據。',
   },
   {
-    number: '04',
     short: '助理',
-    title: '把班表事實與規章證據放在一起',
-    story: 'Mia 想知道自己的排班是否接近規章門檻，並嘗試要求助理修改資料。',
-    outcome: '讀取型問題有來源；寫入要求被拒絕。',
-    proof: 'LangGraph 路由後只呼叫允許的 owner-scoped 工具。',
+    title: '班表 × 規章 / Assistant',
+    hint: '從問題、證據與路由，看清楚回答的安全邊界。',
   },
   {
-    number: '05',
     short: '證據',
-    title: '驗證它如何在安全邊界內運作',
-    story: '最後離開產品畫面，檢查資料隔離、整合、部署與測試證據。',
-    outcome: '每項履歷技術都有可追查的程式碼或報告。',
-    proof: 'Repository、OpenAPI、evaluation 與影片互相對得上。',
+    title: '實作與驗證 / Implementation & Evidence',
+    hint: '區分系統實作、合成示範與離線評估。',
   },
 ] as const
 
-export function ReviewerShowcase({ onExit }: ReviewerShowcaseProps) {
+export function ReviewerShowcase({ onExit }: { onExit: () => void }) {
   const [index, setIndex] = useState(0)
-  const step = steps[index] ?? steps[0]
-  const isLast = index === steps.length - 1
-
-  function next() {
-    setIndex((current) => Math.min(current + 1, steps.length - 1))
-  }
-
-  function previous() {
-    setIndex((current) => Math.max(current - 1, 0))
-  }
-
+  const [review, setReview] = useState<'pending' | 'validated' | 'confirmed'>(
+    'pending',
+  )
+  const [conflict, setConflict] = useState(false)
+  const [writeRequest, setWriteRequest] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const title = useRef<HTMLHeadingElement>(null)
+  const confirmation = useRef<HTMLButtonElement>(null)
+  const reviewStatus = useRef<HTMLParagraphElement>(null)
+  const step = steps[index]!
+  useEffect(() => {
+    title.current?.focus({ preventScroll: true })
+    title.current?.scrollIntoView?.({ block: 'nearest' })
+  }, [index])
+  useEffect(() => {
+    if (review === 'validated') confirmation.current?.focus()
+    if (review === 'confirmed') reviewStatus.current?.focus()
+  }, [review])
   function replay() {
+    setReview('pending')
+    setConflict(false)
+    setWriteRequest(false)
+    setExpanded(false)
     setIndex(0)
+    title.current?.focus({ preventScroll: true })
   }
-
   return (
     <main className="reviewer-shell">
       <header className="reviewer-header">
-        <a className="reviewer-brand" href="#demo" onClick={replay}>
+        <a className="reviewer-brand" href="#demo" onClick={() => setIndex(0)}>
           <span>ShiftMate Web</span>
           <strong>Interactive Demo</strong>
         </a>
@@ -80,296 +79,467 @@ export function ReviewerShowcase({ onExit }: ReviewerShowcaseProps) {
           </button>
         </div>
       </header>
-
-      <aside className="reviewer-scenario" aria-label="Demo 情境">
-        <span>Scenario</span>
-        <p>
-          輪班工作者 Mia
-          收到一張班表截圖。她要確認班次、預估收入，並查清楚連續工作規則；整條流程不需帳號，也不會寫入資料庫。
-        </p>
-      </aside>
-
+      {index === 0 && (
+        <aside className="reviewer-scenario" aria-label="Demo 情境">
+          <span>Scenario</span>
+          <p>
+            輪班工作者 Mia 要核對 2026 年 9
+            月的班表、跨夜工時與預估收入，再查閱連續工作規則。以下為免登入、前端固定合成情境；不呼叫
+            AI、Calendar 或正式班表 API，不寫入資料庫。
+          </p>
+        </aside>
+      )}
       <nav aria-label="Demo 導覽進度" className="reviewer-progress">
-        {steps.map((item, stepIndex) => (
+        {steps.map((item, i) => (
           <button
-            aria-label={`${item.number} ${item.short}`}
-            aria-current={stepIndex === index ? 'step' : undefined}
-            key={item.number}
-            onClick={() => setIndex(stepIndex)}
+            key={item.short}
             type="button"
+            aria-current={index === i ? 'step' : undefined}
+            aria-label={String(i + 1).padStart(2, '0') + ' ' + item.short}
+            onClick={() => setIndex(i)}
           >
-            <span>{item.number}</span>
+            <span>{String(i + 1).padStart(2, '0')}</span>
             {item.short}
           </button>
         ))}
       </nav>
-
-      <section className="reviewer-stage" aria-labelledby="reviewer-title">
+      <section className="reviewer-stage" aria-labelledby="demo-title">
         <div className="reviewer-intro">
           <p className="reviewer-kicker">
-            CASE {step.number} / {String(steps.length).padStart(2, '0')}
+            {String(index + 1).padStart(2, '0')} / 05
           </p>
-          <h1 id="reviewer-title">{step.title}</h1>
-          <p>{step.story}</p>
-          <dl className="reviewer-takeaways">
-            <div>
-              <dt>使用者完成</dt>
-              <dd>{step.outcome}</dd>
-            </div>
-            <div>
-              <dt>可驗證證據</dt>
-              <dd>{step.proof}</dd>
-            </div>
-          </dl>
+          <h1 id="demo-title" ref={title} tabIndex={-1}>
+            {step.title}
+          </h1>
+          <p>{step.hint}</p>
         </div>
-
-        <div className="reviewer-evidence" key={step.number}>
-          {index === 0 && <DashboardCase />}
-          {index === 1 && <ImportCase />}
-          {index === 2 && <RagCase />}
-          {index === 3 && <AssistantCase />}
-          {index === 4 && <PlatformCase />}
+        <div className="reviewer-evidence">
+          {index === 0 && (
+            <div className="reviewer-case">
+              <div className="reviewer-metrics">
+                {[
+                  {
+                    label: '總工時',
+                    value: String(demoTotals.hours),
+                    note: '小時',
+                  },
+                  {
+                    label: '預估薪資',
+                    value: money(demoTotals.amount),
+                    note: '時薪 NT$200',
+                  },
+                  {
+                    label: '班次',
+                    value: String(demoTotals.count),
+                    note: '筆合成資料',
+                  },
+                  {
+                    label: '最長連續工作',
+                    value: String(demoTotals.longest),
+                    note: '天 · 依班次起始日期',
+                  },
+                ].map((metric) => (
+                  <article key={metric.label}>
+                    <span>{metric.label}</span>
+                    <strong>{metric.value}</strong>
+                    <small>{metric.note}</small>
+                  </article>
+                ))}
+              </div>
+              <article className="reviewer-detail">
+                <span className="reviewer-label">跨夜與休息 / Overnight</span>
+                <h2>22:00–06:00 → 7.5 小時</h2>
+                <p>
+                  9 月 3 日 22:00 至翌日 06:00：8 小時 − 0.5 小時休息 = 7.5
+                  小時。
+                </p>
+                <p>
+                  合計 {demoTotals.hours} × 200 = {money(demoTotals.amount)}
+                  。此處由前端合成 fixture 展開計算，不代表呼叫了後端計算服務。
+                </p>
+              </article>
+              <details
+                className="reviewer-detail reviewer-ledger"
+                open={expanded}
+                onToggle={(event) => setExpanded(event.currentTarget.open)}
+              >
+                <summary>展開六筆班表明細 / Shift ledger</summary>
+                <div
+                  className="reviewer-table-scroll"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="六筆班表明細，可橫向捲動"
+                >
+                  <table>
+                    <caption>2026 年 9 月 · Asia/Taipei · 合成資料</caption>
+                    <thead>
+                      <tr>
+                        {[
+                          '日期',
+                          '起訖時間',
+                          '休息扣除',
+                          '有效工時',
+                          '時薪',
+                          '金額',
+                        ].map((label) => (
+                          <th key={label} scope="col">
+                            {label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {demoShifts.map((shift) => (
+                        <tr key={shift.date}>
+                          <th scope="row">{shift.date.slice(5)}</th>
+                          <td>{shift.time}</td>
+                          <td>{shift.breakMinutes} 分鐘</td>
+                          <td>{shift.paidHours} 小時</td>
+                          <td>{money(shift.rate)}</td>
+                          <td>{money(shift.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th scope="row" colSpan={3}>
+                          總計
+                        </th>
+                        <td>{demoTotals.hours} 小時</td>
+                        <td>NT$200</td>
+                        <td>{money(demoTotals.amount)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </details>
+            </div>
+          )}
+          {index === 1 && (
+            <div className="reviewer-case">
+              <p className="reviewer-boundary">
+                固定合成素材與辨識草稿示範；沒有上傳、模型推論或資料庫操作。實際系統以格式驗證與人工覆核守住寫入邊界。
+              </p>
+              <div className="reviewer-review-grid">
+                <figure>
+                  <img
+                    src={scheduleImage}
+                    alt="合成班表圖片：2026 年 9 月六筆班次，9 月 9 日為 09:00–13:00；完整內容與結果明細一致。"
+                  />
+                  <figcaption>合成班表圖片 / Synthetic input</figcaption>
+                </figure>
+                <article className="reviewer-detail">
+                  <h2>辨識草稿 / Draft</h2>
+                  <ul className="reviewer-draft">
+                    {demoShifts.map((shift) => (
+                      <li key={shift.date}>
+                        <span>{shift.date.slice(5)}</span>
+                        <strong>
+                          {shift.date === '2026-09-09' && review === 'pending'
+                            ? '09:00–?'
+                            : shift.time}
+                        </strong>
+                      </li>
+                    ))}
+                  </ul>
+                  <p>
+                    9 月 9 日：
+                    {review === 'pending'
+                      ? '結束時間不清楚，禁止直接寫入'
+                      : '09:00–13:00 · 休息 0 分鐘 · 4 小時'}
+                  </p>
+                </article>
+              </div>
+              <ol className="reviewer-review-states" aria-label="覆核流程">
+                <li aria-current={review === 'pending' ? 'step' : undefined}>
+                  待覆核
+                </li>
+                <li aria-current={review === 'validated' ? 'step' : undefined}>
+                  通過格式檢查
+                </li>
+                <li aria-current={review === 'confirmed' ? 'step' : undefined}>
+                  人工確認
+                </li>
+              </ol>
+              <div className="reviewer-choice reviewer-choice--row">
+                <button
+                  type="button"
+                  disabled={review !== 'pending'}
+                  onClick={() => setReview('validated')}
+                >
+                  模擬補正為 13:00
+                </button>
+                <button
+                  type="button"
+                  disabled={review !== 'validated'}
+                  ref={confirmation}
+                  onClick={() => setReview('confirmed')}
+                >
+                  模擬確認
+                </button>
+              </div>
+              <p role="status" ref={reviewStatus} tabIndex={-1}>
+                {review === 'pending'
+                  ? '待覆核：先比對圖片並補正結束時間。'
+                  : review === 'validated'
+                    ? '通過格式檢查，尚未人工確認。'
+                    : '已確認，僅本次示範，不寫入資料庫'}
+              </p>
+            </div>
+          )}
+          {index === 2 && (
+            <div className="reviewer-case">
+              <div className="reviewer-choice reviewer-choice--row">
+                <button
+                  type="button"
+                  aria-pressed={!conflict}
+                  onClick={() => setConflict(false)}
+                >
+                  單一有效版本
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={conflict}
+                  onClick={() => setConflict(true)}
+                >
+                  衝突版本
+                </button>
+              </div>
+              <article className="reviewer-detail">
+                <h2>連續工作最多可以幾天？</h2>
+                <p>
+                  以下均為合成文件與固定回答，不是真實公司規章或即時檢索結果。
+                </p>
+                <p role="status">
+                  {conflict
+                    ? '兩份同期間文件分別規定六日與四日，且無法判定優先版本：拒絕回答，未提供合規判定。'
+                    : '依合成員工手冊 A，連續工作不得超過六日；例外安排須人工覆核。'}
+                </p>
+              </article>
+              <div className="reviewer-policy-sources">
+                {policySources.slice(0, conflict ? 2 : 1).map((source) => (
+                  <article className="reviewer-detail" key={source.version}>
+                    <span className="reviewer-label">{source.version}</span>
+                    <h2>{source.name}</h2>
+                    <blockquote>{source.excerpt}</blockquote>
+                    <p>出處：{source.source}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+          {index === 3 && (
+            <div className="reviewer-case">
+              <div className="reviewer-choice reviewer-choice--row">
+                <button
+                  type="button"
+                  aria-pressed={!writeRequest}
+                  onClick={() => setWriteRequest(false)}
+                >
+                  班表 × 規章
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={writeRequest}
+                  onClick={() => setWriteRequest(true)}
+                >
+                  嘗試寫入要求
+                </button>
+              </div>
+              <article className="reviewer-detail">
+                <span className="reviewer-label">
+                  合成情境示範 / Fixed scenario
+                </span>
+                <h2>
+                  {writeRequest
+                    ? '請幫我刪除 9 月 3 日的夜班。'
+                    : '我的班表有違反連續工作規定嗎？'}
+                </h2>
+                <p>
+                  路由：
+                  {writeRequest
+                    ? 'unsupported · 寫入要求'
+                    : 'hybrid · 班表 × 規章'}
+                </p>
+                <p>
+                  {writeRequest
+                    ? '證據：要求刪除已確認班次，超出唯讀工具能力，不讀取或修改班表。'
+                    : '證據：六筆合成班表最長連續 2 天；合成員工手冊 A 第 4 頁門檻為六日（使用單一有效版本）。'}
+                </p>
+              </article>
+              <article className="reviewer-detail">
+                <h2>模擬執行軌跡</h2>
+                <ol>
+                  {(writeRequest
+                    ? [
+                        '意圖路由 → 不支援寫入',
+                        '資料工具 → 未呼叫',
+                        '寫入操作 → 未執行；班表未變更',
+                      ]
+                    : [
+                        '意圖路由 → hybrid',
+                        '班表摘要 → 6 班、40 小時、最長 2 天',
+                        '規章證據 → 手冊 A，第 4 頁，六日上限',
+                        '規則比對 → 2 ≤ 6',
+                      ]
+                  ).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ol>
+                <p role="status">
+                  {writeRequest
+                    ? '拒絕寫入：助理只有讀取工具。未執行寫入，班表未變更。'
+                    : '合成回答：目前最長連續工作 2 天，未超過此示範規章的六日門檻。不構成法律、人資或薪資判定。'}
+                </p>
+              </article>
+            </div>
+          )}
+          {index === 4 && (
+            <div className="reviewer-case">
+              <article className="reviewer-detail">
+                <h2>01 · 資料隔離與安全邊界</h2>
+                <p>
+                  PostgreSQL forced RLS 與無 BYPASSRLS 的 runtime role；AI
+                  草稿須經人工確認，助理不提供已確認班次的寫入工具。
+                </p>
+                <ul>
+                  <li>
+                    <a
+                      href={repoFile(
+                        'backend/tests/integration/test_migrations_and_rls.py',
+                      )}
+                    >
+                      RLS 整合測試
+                    </a>
+                  </li>
+                  <li>
+                    <a href={repoFile('backend/tests/test_import_service.py')}>
+                      草稿與確認測試
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={repoFile('backend/tests/test_assistant_service.py')}
+                    >
+                      助理路由與安全測試
+                    </a>
+                  </li>
+                </ul>
+              </article>
+              <article className="reviewer-detail">
+                <h2>02 · 工具整合與失敗處理</h2>
+                <p>
+                  Calendar 冪等同步、加密 token 與 ICS 匯出；六個 owner-scoped
+                  唯讀 MCP 工具。以下是實作與測試證據，不表示此 Demo
+                  有呼叫外部服務。
+                </p>
+                <ul>
+                  <li>
+                    <a
+                      href={repoFile(
+                        'docs/decisions/0004-calendar-oauth-and-idempotency.md',
+                      )}
+                    >
+                      Calendar 設計決策
+                    </a>{' '}
+                    ·{' '}
+                    <a
+                      href={repoFile('backend/tests/test_calendar_service.py')}
+                    >
+                      同步失敗與資料不變測試
+                    </a>
+                  </li>
+                  <li>
+                    <a href={repoFile('docs/mcp.md')}>
+                      MCP transport 與工具文件
+                    </a>{' '}
+                    ·{' '}
+                    <a href={repoFile('backend/tests/test_mcp_server.py')}>
+                      工具測試
+                    </a>
+                  </li>
+                  <li>
+                    <a href={repoFile('evals/failure_modes/cases.json')}>
+                      Gemini、JWT、Calendar 失敗注入案例
+                    </a>
+                  </li>
+                </ul>
+              </article>
+              <article className="reviewer-detail">
+                <h2>03 · 評估方法、結果與限制</h2>
+                <p>
+                  離線、版本化合成 fixtures；不呼叫 live
+                  model。小樣本結果不是普遍準確率，也不是 Demo
+                  固定數字的效能評估。
+                </p>
+                <ul>
+                  <li>
+                    OCR：9 例、3 個失敗；日期 exact match 0.889、時間
+                    0.778、覆核召回
+                    0.80。比較結構化輸出，不測實際圖片解碼；skewed
+                    時間錯誤、multiple-dates 漏班、illegible 漏標覆核。
+                  </li>
+                  <li>
+                    RAG：5 例、1 個失敗；Recall@k 0.90、引用正確性
+                    1.00、groundedness 0.80、拒答正確率 0.80。合成片段與人工
+                    groundedness 標籤；conflicting-overtime
+                    有檢索遺漏、無依據回答與拒答錯誤。fixture 延遲不是即時效能。
+                  </li>
+                  <li>
+                    Routing：12 題、2 個 ambiguous 回退；accuracy
+                    0.833、deterministic coverage 0.833。terse-leave 與
+                    terse-week 未正確分流；未評估可選 Gemini fallback。
+                  </li>
+                </ul>
+                <p>
+                  <a href={reviewerLinks.evaluations}>完整評估報告與失敗案例</a>{' '}
+                  · <a href={repoFile('evals/run.py')}>重現評估方法</a> ·{' '}
+                  <a href={repoFile('backend/tests/test_demo_fixture.py')}>
+                    合成班表與後端計算一致性測試
+                  </a>
+                </p>
+              </article>
+              <div className="reviewer-release">
+                <p>查看實作，或重新檢查這組合成資料。</p>
+                <div>
+                  <a href={reviewerLinks.repository}>GitHub</a>
+                  <a href={reviewerLinks.evaluations}>評估報告</a>
+                  <button
+                    type="button"
+                    className="reviewer-inline-action"
+                    onClick={replay}
+                  >
+                    重新體驗
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
-
       <footer className="reviewer-controls">
         <div>
-          <button disabled={index === 0} onClick={previous} type="button">
+          <button
+            type="button"
+            disabled={index === 0}
+            onClick={() => setIndex(index - 1)}
+          >
             上一步
           </button>
-          {!isLast && (
-            <button className="reviewer-primary" onClick={next} type="button">
+          {index < 4 && (
+            <button
+              type="button"
+              className="reviewer-primary"
+              onClick={() => setIndex(index + 1)}
+            >
               下一步
-            </button>
-          )}
-          {isLast && (
-            <button className="reviewer-primary" onClick={replay} type="button">
-              重新導覽
             </button>
           )}
         </div>
         <p aria-live="polite">
-          第 {index + 1} 步，共 {steps.length} 步
+          第 {index + 1} 步，共 5 步 · 狀態僅保留於本次體驗
         </p>
       </footer>
     </main>
-  )
-}
-
-function EvidenceLabel({ children }: { children: ReactNode }) {
-  return <p className="reviewer-label">{children}</p>
-}
-
-function DashboardCase() {
-  const data = reviewerShowcase.dashboard
-  return (
-    <div className="reviewer-case reviewer-case--dashboard">
-      <div className="reviewer-metrics">
-        {data.metrics.map((metric) => (
-          <article key={metric.label}>
-            <span>{metric.label}</span>
-            <strong>{metric.value}</strong>
-            <small>{metric.note}</small>
-          </article>
-        ))}
-      </div>
-      <article className="reviewer-detail">
-        <EvidenceLabel>跨夜班 edge case</EvidenceLabel>
-        <strong>{data.overnight}</strong>
-        <p>
-          時區、休息時間、跨日與有效期費率都由 deterministic domain service
-          計算；LLM 不計薪、不執行 SQL。
-        </p>
-      </article>
-    </div>
-  )
-}
-
-function ImportCase() {
-  const data = reviewerShowcase.importReview
-  const [corrected, setCorrected] = useState(false)
-  return (
-    <div className="reviewer-case reviewer-case--import">
-      <ol className="reviewer-pipeline" aria-label="智慧匯入安全流程">
-        {data.pipeline.map((stage) => (
-          <li key={stage}>{stage}</li>
-        ))}
-      </ol>
-      <div className="reviewer-candidates">
-        {data.candidates.map((candidate) => {
-          const isCorrected = candidate.status === 'review' && corrected
-          return (
-            <article key={`${candidate.date}:${candidate.time}`}>
-              <div>
-                <strong>{candidate.date}</strong>
-                <span>{isCorrected ? '09:00–17:00' : candidate.time}</span>
-              </div>
-              <span data-status={isCorrected ? 'ready' : candidate.status}>
-                {candidate.status === 'confirmed'
-                  ? '已確認'
-                  : isCorrected
-                    ? '可確認'
-                    : '需要覆核'}
-              </span>
-              {candidate.warning && !isCorrected && <p>{candidate.warning}</p>}
-            </article>
-          )
-        })}
-      </div>
-      <div className="reviewer-try">
-        <div>
-          <EvidenceLabel>Try it</EvidenceLabel>
-          <p role="status">
-            {corrected
-              ? '結束時間已補正；資料通過驗證，但仍需人工確認才會寫入。'
-              : '目前有 1 筆資料被阻擋，不能直接寫入班表。'}
-          </p>
-        </div>
-        <button
-          aria-pressed={corrected}
-          className="reviewer-inline-action"
-          onClick={() => setCorrected((value) => !value)}
-          type="button"
-        >
-          {corrected ? '還原不確定欄位' : '模擬人工補正 17:00'}
-        </button>
-      </div>
-      <p className="reviewer-boundary">
-        Schema
-        validation、資料庫草稿與逐筆確認，讓模型輸出永遠不會直接成為已確認班次。
-      </p>
-    </div>
-  )
-}
-
-function RagCase() {
-  const data = reviewerShowcase.rag
-  const [showConflict, setShowConflict] = useState(false)
-  return (
-    <div className="reviewer-case reviewer-case--rag">
-      <article className="reviewer-answer">
-        <EvidenceLabel>合成問題</EvidenceLabel>
-        <h2>{data.question}</h2>
-        {!showConflict && (
-          <>
-            <p>{data.answer}</p>
-            <blockquote>
-              <strong>{data.citation}</strong>
-              <span>「{data.excerpt}」</span>
-            </blockquote>
-          </>
-        )}
-        {showConflict && (
-          <div className="reviewer-refusal-result" role="status">
-            <strong>資料不足，未提供合規判定</strong>
-            <p>{data.refusal}</p>
-          </div>
-        )}
-      </article>
-      <article className="reviewer-refusal">
-        <EvidenceLabel>切換證據狀態</EvidenceLabel>
-        <div className="reviewer-choice" aria-label="規章證據狀態">
-          <button
-            aria-pressed={!showConflict}
-            onClick={() => setShowConflict(false)}
-            type="button"
-          >
-            單一有效版本
-          </button>
-          <button
-            aria-pressed={showConflict}
-            onClick={() => setShowConflict(true)}
-            type="button"
-          >
-            衝突版本
-          </button>
-        </div>
-        <p>同一個問題會依可用證據回答或拒答，不會同時展示兩種結論。</p>
-        <span>RAG evaluation · Recall@k 0.90 · citation correctness 1.00</span>
-      </article>
-    </div>
-  )
-}
-
-function AssistantCase() {
-  const data = reviewerShowcase.assistant
-  const [writeRequest, setWriteRequest] = useState(false)
-  return (
-    <div className="reviewer-case reviewer-case--assistant">
-      <article className="reviewer-answer">
-        <EvidenceLabel>問 ShiftMate</EvidenceLabel>
-        <div
-          className="reviewer-choice reviewer-choice--row"
-          aria-label="助理問題"
-        >
-          <button
-            aria-pressed={!writeRequest}
-            onClick={() => setWriteRequest(false)}
-            type="button"
-          >
-            班表 × 規章
-          </button>
-          <button
-            aria-pressed={writeRequest}
-            onClick={() => setWriteRequest(true)}
-            type="button"
-          >
-            嘗試寫入要求
-          </button>
-        </div>
-        <h2>{writeRequest ? data.writeQuestion : data.question}</h2>
-        <div className="reviewer-route">
-          <span>
-            {writeRequest ? 'unsupported · write request' : data.route}
-          </span>
-          <strong>{writeRequest ? '安全拒絕' : '已驗證證據'}</strong>
-        </div>
-        <p>{writeRequest ? data.writeRefusal : data.answer}</p>
-        {!writeRequest && (
-          <ul className="reviewer-facts" aria-label="deterministic 班表事實">
-            {data.facts.map((fact) => (
-              <li key={fact}>{fact}</li>
-            ))}
-          </ul>
-        )}
-      </article>
-      <aside className="reviewer-tools">
-        <EvidenceLabel>執行軌跡</EvidenceLabel>
-        {(writeRequest ? data.writeTools : data.tools).map((tool) => (
-          <span key={tool}>{tool}</span>
-        ))}
-        <p>Stateless · owner-scoped · 無寫入工具</p>
-      </aside>
-    </div>
-  )
-}
-
-function PlatformCase() {
-  const data = reviewerShowcase.platform
-  return (
-    <div className="reviewer-case reviewer-case--platform">
-      <div className="reviewer-proof-list">
-        {data.evidence.map((item) => (
-          <article key={item.label}>
-            <strong>{item.label}</strong>
-            <span>{item.value}</span>
-          </article>
-        ))}
-      </div>
-      <aside className="reviewer-release">
-        <EvidenceLabel>可追溯成果</EvidenceLabel>
-        <h2>不是只挑成功案例</h2>
-        <p>
-          Repository 同時保留測試、失敗案例、限制、部署政策與 teardown
-          步驟，讓每項履歷技術都有可查證證據。
-        </p>
-        <div>
-          <a href={reviewerLinks.repository}>GitHub repository</a>
-          <a href={reviewerLinks.openApi}>OpenAPI</a>
-          <a href={reviewerLinks.evaluations}>Evaluation reports</a>
-          <a href={reviewerLinks.video}>2–3 分鐘影片</a>
-        </div>
-      </aside>
-    </div>
   )
 }
